@@ -1,5 +1,5 @@
 ---
-title: "Bootstrap Methods"
+title: "ST793 Final Project"
 author: "Emmett Kendall, Neil Dey"
 date: "11/18/2021"
 output: html_document
@@ -9,17 +9,17 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+## Bootstrap Methods: Another look at the Jackknife
+#### B. Efron
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+## Introduction 
+The format of this blog post will be as follows. In [Section I](#sec1) we begin with a summary and clear description of the main topics discussed in Efron's paper. In [Section II](#sec2), we will include the proofs of major theorems and remarks made. Lastly, in [Section III](#sec3), we will include illustrative examples and simulations that help the reader understand the impact and importance of Bootstrap.
 
 ```{r cars}
 summary(cars)
 ```
 
-## Including Plots
+## Section I: Summary of article {#sec1}
 
 You can also embed plots, for example:
 
@@ -27,4 +27,8 @@ You can also embed plots, for example:
 plot(pressure)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+[comment]: <> (Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.)
+
+## Section II: Theory {#sec2}
+
+## Section III: Examples {#sec3}
