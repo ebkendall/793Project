@@ -4,6 +4,7 @@ author: "Emmett Kendall, Neil Dey"
 date: "11/18/2021"
 output: html_document
 ---
+\newcommand{\bb}[1] {\boldsymbol{#1}}
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -17,20 +18,23 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Introduction 
 The format of this blog post will be as follows. In [Section I](#sec1) we begin with a summary and clear description of the main topics discussed in Efron's paper. In [Section II](#sec2), we will include the proofs of major theorems and remarks made. Lastly, in [Section III](#sec3), we will include illustrative examples and simulations that help the reader understand the impact and importance of Bootstrap.
 
-```{r cars}
-summary(cars)
-```
-
 ## Section I: Summary of article {#sec1}
+### Bootstrap Methods
+The ultimate goal of the methods outlined in bootstrap are to take observations, $\bb{X}$, from an unknown distribution, $F$, and understanding the sampling distribution of a chosen random quantity, $R(\bb{X}, F)$, of interest using only the observed data you have available. In the context of this paper, there existed a method called "Jackknife" which mainly worked for two forms of the $R(\bb{X}, F)$ that is
+\begin{align*}
+R(\bb{X}, F) &= t(\bb{X}) - \theta(F)\\
+R(\bb{X}, F) &= \frac{t(\bb{X}) - \widehat{Bias}(t) - \theta(F)}{\sqrt{\widehat{Var}(t)}}
+\end{align*}
+where $t(\bb{X})$ estimates $\theta(F)$. What is worth noting is that jackknife approximates the distribution of $R$ by sampling $n-1$ times \textbf{with} replacement. Bootstrap is then introduced and follows the general framwork below
 
-You can also embed plots, for example: 
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-[comment]: <> (Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.)
+\begin{itemize}
+  \item Given the existing data $\bb{X} = (x_1,...,x_n)$, assign each data point probability $1/n$ such that selecting an observation from the sample has equal probability. 
+  \item Sample from $\bb{X}$ \textbf{with} replacement to get $\bb{X}^*$  which has data points ${x_1^*, ..., x_n^*} \subseteq \bb{X}$. Do this multiple times since each $\bb{X_i^*}$ will be from the sampling distribution $\hat{F}$.
+  \item Now we get the \textit{bootstrap distribution} which is the "empirical distribution" for $R(\bb{X},F)$, namely $R^* = R(\bb{X^*}, \hat F)$.
+\end{itemize}
 
 ## Section II: Theory {#sec2}
 
+
 ## Section III: Examples {#sec3}
+
