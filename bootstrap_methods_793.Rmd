@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 # _Bootstrap Methods: Another look at the Jackknife_
 ### B. Efron
 
----
+*** 
 
 ## Introduction 
 The format of this blog post will be as follows. In [Section I](#sec1) we begin with a summary and clear description of the main topics discussed in Efron's paper. In [Section II](#sec2), we will include the proofs of major theorems and remarks made. Lastly, in [Section III](#sec3), we will include illustrative examples and simulations that help the reader understand the impact and importance of Bootstrap.
@@ -27,14 +27,35 @@ R(\bb{X}, F) &= \frac{t(\bb{X}) - \widehat{Bias}(t) - \theta(F)}{\sqrt{\widehat{
 \end{align*}
 where $t(\bb{X})$ estimates $\theta(F)$. What is worth noting is that jackknife approximates the distribution of $R$ by sampling $n-1$ times \textbf{with} replacement. Bootstrap is then introduced and follows the general framwork below
 
-\begin{itemize}
-  \item Given the existing data $\bb{X} = (x_1,...,x_n)$, assign each data point probability $1/n$ such that selecting an observation from the sample has equal probability. 
-  \item Sample from $\bb{X}$ \textbf{with} replacement to get $\bb{X}^*$  which has data points ${x_1^*, ..., x_n^*} \subseteq \bb{X}$. Do this multiple times since each $\bb{X_i^*}$ will be from the sampling distribution $\hat{F}$.
-  \item Now we get the \textit{bootstrap distribution} which is the "empirical distribution" for $R(\bb{X},F)$, namely $R^* = R(\bb{X^*}, \hat F)$.
-\end{itemize}
+1. Given the existing data $\bb{X} = (x_1,...,x_n)$, assign each data point probability $1/n$ such that selecting an observation from the sample has equal probability. 
+2. Sample from $\bb{X}$ \textbf{with} replacement to get $\bb{X}^*$  which has data points ${x_1^*, ..., x_n^*} \subseteq \bb{X}$. Do this multiple times since each $\bb{X_i^*}$ will be from the sampling distribution $\hat{F}$.
+3. Now we get the \textit{bootstrap distribution} which is the "empirical distribution" for $R(\bb{X},F)$, namely $R^* = R(\bb{X^*}, \hat F)$.
+
+The whole motivation is that if the resampled distribution $\hat F$ is remotely close to the true $F$, then the estimator for $R$'s distribution will be close to the truth. A large factor in the success of this method, however, is the functional form of $R$. Additionally, while it may be relatively straightforward to calculate the expected value and variance of $R^*$, actually deriving its distribution proves to be difficult. In this paper, we will dive into the three main derivation techniques for uncovering this distribution. They are
+
+1. Pure theoretical derivations and calculations
+2. Monte Carlo simulations (get an empirical distribution for $R^*$)
+3. Taylor series approximations.
+
+### Estimating the median {#med}
+Consider a simple illustration. Suppose, for the unknown distribution $F$, we are interested in uncovering the median. Call $\theta(F)$ the true median, and let $t(\bb{X}) = X_{(m)}$ be the estimator, i.e. the sample median. For ease, assume the sample size, $n$, is odd ($\exists m\in \mathbb{Z}^+$ s.t. $n=2m+1$).
+
+### Error rate estimation in discriminant analysis {#disAn}
+
+### Relationship with the jackknife {#relJack}
+
+### Wilcoxon's statistic {#wilStat}
+
+### Regression models {#reg}
 
 ## Section II: Theory {#sec2}
+<!-- we will use this section sort of as an appendix. Put all proofs here with a link and then reference them from the summary-->
 
 
 ## Section III: Examples {#sec3}
+<!-- these will be our personal examples that are the ones that (i guess) will count for our grade -->
+
+### Example 1 {#ex1}
+
+### Example 2 {#ex2}
 
