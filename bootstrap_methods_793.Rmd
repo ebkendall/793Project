@@ -63,13 +63,14 @@ with empirical error rate
 We are interested in the difference $e_F - \widehat{e}_F$ as well as the analogous difference for $G$. 
 
 ### Relationship with the jackknife {#relJack}
-We now examine the approximate bias and variance of our bootstrap estimators to show that they agree with the approximations given by the \textit{infinitesimal Jackknife} method.
+We now examine the approximate bias and variance of our bootstrap estimators. We show that these approximations agree exactly with the approximations given by the \textit{infinitesimal Jackknife} method, and we also show agreement with the ordinary Jackknife up to a factor of $1 + O(1/n)$.
+
 In a one-sample situation, define $N_i^* = |\{j \,:\, X_j^* = X_i\}|$, the number of bootstrap samples that match the $i$th observation.
 Note that $\vb*{N}^* \sim \operatorname{Multinom}(n; \vb*{1}/n)$ so that $\E[\vb*{N}^*] = \vb*{1}$ and $\var[\vb*{N}^*] = \vb*{I} - \vb*{1}^\top\vb*{1}/n$. 
 Then define $\vb*{P}^* = \vb*{N}^*/n$ as a ``normalized" version of $\vb*{N}^*$ that estimates probabilities of the bootstrap samples that match the $i$th observation.
 Note, then, that
-\begin{equation}
-  \E[\vb*{P}^*] = \vb*{1}/n \quad\quad \var[\vb*{P}^*] = \vb*{I}/n^2 - \vb*{1}^\top\vb*{1}/n^3.
+\begin{equation}\label{eq:Pmoments}
+  \E[\vb*{P}^*] = \vb*{1}/n \quad\quad \var[\vb*{P}^*] = \vb*{I}/n^2 - \vb*{11}^\top/n^3.
 \end{equation}
 
 Let us suppose that the random variable of interest, $R(\vb*{X}, F)$, is invariant to with respect to the ordering of $X_1, \ldots, X_n$. 
@@ -89,9 +90,9 @@ Hence, we define the extension
 \end{equation*}
 Then $R^*$ agrees with $R$ on any possible realization of $\vb*{P}^*$, and any input to $R^*$ in the first hyperoctant will allow us to recover a valid bootstrap sample.
 
-Thus, we Taylor expand $R^*$ about the point $\vb*{1}/n$, ignoring what we assume to be a negligible remainder term:
+Thus, we Taylor expand $R^*(\vb*{P}^*)$ about $\vb*{1}/n$ (the mean of $\vb*{P}^*$) to second order:
 \begin{equation*}
-  R^*(\vb*{P}) = R^*(\vb*{1}/n) + DR^*(\vb*{1}/n)(\vb*{P}^*-\vb*{1}/n) + \frac{1}{2}(\vb*{P}^* - \vb*{1}/n)^\top HR^*(\vb*{1}/n)(\vb*{P}^* - \vb*{1}/n).
+  R^*(\vb*{P}^*) \approx R^*(\vb*{1}/n) + DR^*(\vb*{1}/n)(\vb*{P}^*-\vb*{1}/n) + \frac{1}{2}(\vb*{P}^* - \vb*{1}/n)^\top HR^*(\vb*{1}/n)(\vb*{P}^* - \vb*{1}/n).
 \end{equation*}
 
 We now note two important properties concerning the derivatives of $R^*$: We have that
@@ -100,7 +101,7 @@ We now note two important properties concerning the derivatives of $R^*$: We hav
 \end{equation}
 and
 \begin{equation}\label{eq:HRx}
-  HR^*(\vb*{1}/n)\vb*{1} = -n\cdot DR^*(\vb*{1}/n).
+  HR^*(\vb*{1}/n)\vb*{1} = -n\cdot DR^*(\vb*{1}/n)^\top.
 \end{equation}
 
 To prove that equation \ref{eq:DRx} holds, we simply apply chain rule several times:
@@ -120,23 +121,82 @@ and so
   &= \sum_{i=1}^n D_iR(\vb*{1}/n) - \sum_{j=1}^n D_jR(\vb*{1}/n) \\
   &= 0
 \end{align*}
-as desired. We perform a similar calculation to verify equation \ref{eq:HRx}:
+as desired. We perform a similar calculation to verify equation \ref{eq:HRx}. We first calculate the $k$th row of the Hessian matrix for $R^*$:
 \begin{align*}
-  H_{l,k}R^* 
-  &= D_l\qty(\frac{1}{\sum P_i}\cdot D_kR\qty(\frac{\vb*{P}}{\sum P_i}) - \frac{P_k}{\qty(\sum P_i)^2} \cdot \sum\limits_{j=1}^n D_j{R}\qty(\frac{\vb*{P}}{\sum P_i})) \\
-  &= -\frac{D_kR\qty(\frac{\vb*{P}}{\sum P_i})}{\qty(\sum P_i)^2}+ \frac{-P_l + \sum P_i}{\qty(\sum P_i)^3}H_{l, k}R\qty(\frac{\vb*{P}}{\sum P_i}) - \frac{P_k}{\qty(\sum P_i)^4}\sum_{j=1}^n H_{j,k}R\qty(\frac{\vb*{P}}{\sum P_i}) \cdot \qty(-P_l + \sum_{i=1}^n P_i) - \frac{2P_k - I(l = k)\cdot\sum P_i}{\qty(\sum P_i)^3} \cdot \sum_{j=1}^n D_jR\qty(\frac{\vb*{P}}{\sum P_i})
+  H_kR^*(\vb*{P}) &= D(D_kR^*) \\
+  &= D\qty(\frac{1}{\sum P_i}\cdot DR\qty(\frac{\vb*{P}}{\sum P_i})\vb*{e}_k - \frac{P_k}{(\sum P_i)^2}DR\qty(\frac{\vb*{P}}{\sum P_i})\cdot \vb*{1}) \\
+  &= -\frac{\vb*{1}^\top}{(\sum P_i)^2}D_kR\qty(\frac{\vb*{P}}{\sum P_i}) + \qty(\frac{2P_k\vb*{1}^\top}{(\sum P_i)^3} - \frac{\vb*{e}_k^\top}{(\sum P_i)^2})\sum_{i=1}^n D_iR\qty(\frac{\vb*{P}}{\sum P_i}) + \qty(\frac{\vb*{e}_k^\top}{(\sum P_i)^3} - \frac{P_k - \vb*{1}^\top}{(\sum P_i)^4})HR\qty(\frac{\vb*{P}}{\sum P_i})\qty(\vb*{I}\sum P_i - \vb*{1}^\top \otimes \vb*{P}).
 \end{align*}
 Evaluating at $\vb*{1}/n$, we have that
 \begin{equation*}
-  H_{l,k}R^*(\vb*{1}/n) = -D_kR(\vb*{1}/n) + \frac{n-1}{n}H_{l,k}R(\vb*{1}/n) - \frac{n-1}{n^2}\sum_{j=1}^n H_{l, j}R(\vb*{1}/n) + \qty(\frac{2}{n} - I(l = k))\sum_{j=1}^n D_jR(\vb*{1}/n)
+  H_kR^*(\vb*{1}/n) = -\vb*{1}^\top D_k(\vb*{1}/n) + \qty(\frac{2}{n}\vb*{1} - \vb*{e}_k^\top)\sum_{i=1}^n D_iR(\vb*{1}/n) + \qty(\vb*{e_k^\top} - \vb*{1}/n)HR(\vb*{1}/n)(\vb*{I} - \vb*{1}^\top \otimes \vb*{1}/n)
 \end{equation*}
-and so
+Summing the elements of the $k$th row, we find that
 \begin{align*}
-  \sum_{l=1}^n H_{l,k}R^*(\vb*{1}/n) 
-  &= -n\cdot D_kR(\vb*{1}/n) - \frac{n-1}{n^2}\sum_{l=1}^n \sum_{j=1}^n H_{l, j}R(\vb*{1}/n) + \frac{n-1}{n^2}\sum_{l=1}^n \sum_{j=1}^n H_{l, j}R(\vb*{1}/n) + \sum_{j=1}^n D_jR(\vb*{1}/n) \\
-  &= -n \cdot D_kR^*(\vb*{1}/n) - \frac{n-1}{n^2}\sum_{l=1}^n \sum_{j=1}^n H_{l, j}R(\vb*{1}/n) + \frac{n-1}{n^2}\sum_{l=1}^n \sum_{j=1}^n H_{l, j}R(\vb*{1}/n)
+  H_kR^*(\vb*{1}/n)\vb*{1} &= -nD_kR(\vb*{1}/n) + \sum_{i=1}^n D_iR(\vb*{1}/n) + 0 \\
+    &= -n D_kR^*(\vb*{1}/n)
 \end{align*}
-which isn't quite what we want because those second derivatives need to cancel out :(
+as desired, as the term involving the Hessian matrix of $R$ is zero by a tedious but straightforward calculation. 
+
+Having established these facts, we can now calculate the expectation and variance of $R(\vb*{P}^*)$. For the expectation, we have that 
+\begin{align*}
+  \E[R^*(\vb*{P}^*)]
+  &\approx R^*(\vb*{1}/n) + DR^*(\vb*{1}/n)\E\qty[(\vb*{P}^*-\vb*{1}/n)] + \frac{1}{2}\E\qty[(\vb*{P}^* - \vb*{1}/n)^\top HR^*(\vb*{1}/n)(\vb*{P}^* - \vb*{1}/n)] \\
+  &= R^*(\vb*{1}/n) + DR^*(\vb*{1}/n) \cdot 0 + \frac{1}{2}\qty[\tr(HR^*(\vb*{1}/n) \cdot \var[\vb*{P}^*]) + \vb*{0}^\top HR^*(\vb*{1}/n)\vb*{0}] \\
+  &= R^*(\vb*{1}/n) + \frac{1}{2}\tr(HR^*(\vb*{1}/n)(\vb*{I}/n^2 - \vb*{11}^\top/n)) \\
+  &= R^*(\vb*{1}/n) + \frac{1}{2n^2}\tr(HR^*(\vb*{1}/n)) - \frac{1}{2}\tr(-nDR^*(\vb*{1}/n)^\top\vb*{1}^\top/n^3) \\
+  &= R^*(\vb*{1}/n) + \frac{1}{2n^2}\tr(HR^*(\vb*{1}/n)) - \frac{1}{2}\tr(0) \\
+  &= R^*(\vb*{1}/n) + \frac{1}{2n}\overline{\vb*{V}}
+\end{align*}
+where $\overline{\vb*{V}} = \frac{1}{n}\sum H_{ii}R^*(\vb*{1}/n)$. Note the use of equation \ref{eq:Pmoments} in the second and third lines above, as well as equation \ref{eq:HRx} in the fourth line and equation \ref{eq:DRx} in the fifth. Hence, our bias is approximately
+\begin{equation} \label{eq:bootbias}
+  \operatorname{Bias}[R(\vb*{X}^*), \widehat{F})] \approx \frac{1}{2n} \overline{\vb*{V}}.
+\end{equation}
+
+Similarly with the variance (this time only Taylor expanding to first order), we have that
+\begin{align*}
+  \var[R^*(\vb*{P}^*)] 
+  &\approx \var[R^*(\vb*{1}/n) + DR^*(\vb*{1}/n)(\vb*{P}^*-\vb*{1}/n)] \\
+  &= DR^*(\vb*{1}/n)\var[\vb*{P}^*-\vb*{1}/n]DR^*(\vb*{1}/n)^\top \\
+  &= DR^*(\vb*{1}/n)\qty(\vb*{I}/n^2 + \vb*{11}^\top/n^3)DR^*(\vb*{1}/n)^\top
+\end{align*}
+which simplifies to
+\begin{equation} \label{eq:bootvar}
+  \var[R(\vb*{X}^*, \widehat{F})] \approx \frac{1}{n^2}\sum_{i=1}^n D_iR^*(\vb*{1}/n)^2
+\end{equation}
+
+The above expressions for the bias and variance are exactly those given by the infinitesimal Jackknife. We can also compare these expressions to those given by the usual Jackknife, which replaces partial derivatives $D_iR^*$ with the finite differences
+\begin{equation*}
+  \Delta_iR^* = (n-1)\qty[\frac{1}{n}\sum_{j=1}^n R^*\qty(\frac{\vb*{1}-\vb*{e}_j}{n-1}) - R^*\qty(\frac{\vb*{1}-\vb*{e}_i}{n-1})],
+\end{equation*}
+where $\vb*{e}_j$ is the $j$th standard basis vector.
+Note that the above definition of $\Delta_iR^*$ is simply a direct implementation of the Jackknife's ``leave one out" procedure, but written in the language of Bootstrap.
+In this way, the bias and variance variance estimates from the ordinary Jackknife are instead given by 
+\begin{align}
+  \E[R(\vb*{X}^*, \widehat{F})] &\approx \frac{1}{2(n-1)}\overline{\vb*{V}} \label{eq:jbias} \\
+  \var[R(\vb*{X}^*, \widehat{F})] &\approx \frac{1}{n(n-1)}\sum_{i=1}^n \qty(\Delta_iR^*)^2. \label{eq:jvar}
+\end{align}
+
+The bootstrap bias estimate of equation \ref{eq:bootbias} differs from the Jackknife bias estimate of \ref{eq:jbias} by a factor of $n/(n-1) = 1 + O(1/n)$. 
+We can show that the variance estimates of the bootstrap (eq. \ref{eq:bootvar}) and Jackknife (eq. \ref{eq:jvar}) differ by the same factor of $1 + O(1/n)$. 
+
+Via the Taylor expansion, we have that
+\begin{align*}
+  R^*\qty(\frac{\vb*{1}-\vb*{e}_i}{n-1})
+  &= R^*\qty(\vb*{1}/n) +  DR^*(\vb*{1}/n)\qty(\frac{\vb*{1}}{n(n-1)} - \frac{\vb*{e}_i}{n-1}) + \frac{1}{2}\qty(\frac{\vb*{1}}{n(n-1)} - \frac{\vb*{e}_i}{n-1})^\top HR^*(\vb*{1}/n)\qty(\frac{\vb*{1}}{n(n-1)} - \frac{\vb*{e}_i}{n-1}), \\
+\intertext{which using equations \ref{eq:DRx} and \ref{eq:HRx} simplifies to}
+  &= R^*\qty(\vb*{1}/n) - \frac{D_iR^*(\vb*{1}/n)}{n-1} + \frac{D_iR^*(\vb*{1}/n)}{(n-1)^2} + \frac{H_{ii}R^*(\vb*{1}/n)}{2(n-1)^2} \\
+  &= R^*\qty(\vb*{1}/n) - \frac{n-2}{(n-1)^2} D_iR^*(\vb*{1}/n)+ \frac{H_{ii}R^*(\vb*{1}/n)}{2(n-1)^2}.
+\end{align*}
+We thus see that
+\begin{align*}
+  \Delta_iR^* 
+  &= (n-1)\qty[\frac{1}{n}\sum_{j=1}^n R^*\qty(\frac{\vb*{1}-\vb*{e}_j}{n-1}) - R^*\qty(\frac{\vb*{1}-\vb*{e}_i}{n-1})] \\
+  &= (n-1)\qty[\frac{1}{n}\sum_{j=1}^n\qty[R^*\qty(\vb*{1}/n) - \frac{n-2}{(n-1)^2} D_jR^*(\vb*{1}/n)+ \frac{H_{jj}R^*(\vb*{1}/n)}{2(n-1)^2}] - R^*\qty(\vb*{1}/n) + \frac{n-2}{(n-1)^2} D_iR^*(\vb*{1}/n) - \frac{H_{ii}R^*(\vb*{1}/n)}{2(n-1)^2}] \\
+  &= \frac{1}{2n(n-1)}\sum_{j=1}^n H_{jj}R^*(\vb*{1}/n) + \frac{n-2}{n-1}D_iR^*(\vb*{1}/n) - \frac{H_{ii}R^*(\vb*{1}/n)}{2(n-1)} \\
+  &= \frac{n-2}{n-1}D_iR^*(\vb*{1}/n) - \frac{1}{2(n-1)}\qty(H_{ii}R^*(\vb*{1}/n) - \overline{\vb*{V}})
+\end{align*}
+Dividing through by $D_iR^*(\vb*{1}/n)$ again yields that $\Delta_iR^*/D_iR^*(\vb*{1}/n) = 1 + O(1/n)$, immediately yielding the same factor for the ratio of the variance estimates.
 
 ### Wilcoxon's statistic {#wilStat}
 
