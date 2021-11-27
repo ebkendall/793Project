@@ -252,10 +252,9 @@ for(n in ns){
 plot(ns, variance_diff, xlab="n", ylab="Relative Error", main="Relative Error in Variance Estimate vs Sample Size")
 
 quantile(variance_diff, 0.5)
-quantile(variance_diff, 2/3)
 mean(variance_diff)
 ```
-This method is also unbiased for the true variance, but is also much less variable. Though it also can vary wildly for very small $n$, even a small sample size of about $10$ starts yielding very close results. For this reason, bootstrap ``by pairs" is often favored over bootstrap by residuals. 
+This method is also unbiased for the true variance, but is also much less variable. Though it also can vary wildly for very small $n$, even a small sample size of about $10$ starts yielding very close results. For this reason, bootstrap "by pairs" is often favored over bootstrap by residuals. 
 
 These two methods also accurately estimate covariances:
 ```{r}
@@ -284,7 +283,7 @@ for(n in ns){
   }
   cov_diff <- c(cov_diff, (cov(bootstrap_betas[1,], bootstrap_betas[2,])-true_covariance)/true_covariance)
 }
-plot(ns, cov_diff, xlab="n", ylab="Relative Error", main="Relative Error in Covariance Estimate vs Sample Size")
+plot(ns, cov_diff, xlab="n", ylab="Relative Error", main="Relative Error in Covariance Estimate\n vs Sample Size")
 ```
 ```{r}
 set.seed(0)
@@ -314,9 +313,9 @@ for(n in ns){
   }
   cov_diff <- c(cov_diff, (cov(bootstrap_betas[1,], bootstrap_betas[2,])-true_covariance)/true_covariance)
 }
-plot(ns, cov_diff, xlab="n", ylab="Relative Error", main="Relative Error in Covariance Estimate vs Sample Size")
+plot(ns, cov_diff, xlab="n", ylab="Relative Error", main="Relative Error in Covariance Estimate\n vs Sample Size")
 ```
-Both bootstrapping by residuals and bootstrapping by pairs have some issues estimating covariances regardless of the sample size; the outliers in bootstrapping by pairs tend to be smaller in magnitude, however. In general though, these covariance estimates are once again unbiased, demonstrating that bootstrap estimates of variances is still valid for vector parameters $\beta$. For simplicity, we will focus on scalar parameters $\beta$ for the rest of the post. 
+Both bootstrapping by residuals and bootstrapping by pairs have some issues estimating covariances regardless of the sample size; the outliers in bootstrapping by pairs tend to be smaller in magnitude, however. In general though, these covariance estimates are once again nearly unbiased, demonstrating that bootstrap estimates of variances is still valid for vector parameters $\beta$. For simplicity, we will focus on scalar parameters $\beta$ for the rest of the post. 
 
 One advantage of bootstrap is clear: If the distribution of the residual variance is unknown, the nonparametric bootstrap will still allow us to obtain estimates for the variance of $\widehat{\beta}$.
 
@@ -353,7 +352,7 @@ for(n in ns){
   }
   rel_errors <- c(rel_errors, (var(bootstrap_betas) - true_variance)/var(bootstrap_betas))
 }
-plot(ns, rel_errors)
+plot(ns, rel_errors, xlab="n", ylab="Relative Error", main="Relative Error vs Sample Size")
 ```
 We see that under heteroskedasticity, bootstrap by residuals performs exceptionally poorly, tending to a relative error of $1$ as the sample size increases. On the other hand, bootstrap by pairs fares much better:
 ```{r}
@@ -388,7 +387,7 @@ for(n in ns){
   }
   rel_errors <- c(rel_errors, (var(bootstrap_betas) - true_variance)/var(bootstrap_betas))
 }
-plot(ns, rel_errors)
+plot(ns, rel_errors, xlab="n", ylab="Relative Error", main="Relative Error vs Sample Size")
 ```
 This method seems to underestimate the variance, and seems to perform poorly with small sample sizes (unlike in the homoskedastic case). However, it fairly quickly converges to the true variance as the sample size increases; a sample size of about $75$ seems to be more than sufficient in this case. This demonstrates the power of bootstrap by pairs: A robustness to heteroskedasticity that allows for valid variance estimation for large samples. 
 
@@ -426,7 +425,7 @@ for(n in ns){
   }
   rel_errors <- c(rel_errors, (var(bootstrap_betas) - true_variance)/var(bootstrap_betas))
 }
-plot(ns, rel_errors)
+plot(ns, rel_errors, xlab="n", ylab="Relative Error", main="Relative Error vs Sample Size")
 ```
 
 ```{r}
@@ -462,7 +461,7 @@ for(n in ns){
   }
   rel_errors <- c(rel_errors, (var(bootstrap_betas) - true_variance)/var(bootstrap_betas))
 }
-plot(ns, rel_errors)
+plot(ns, rel_errors, xlab="n", ylab="Relative Error", main="Relative Error vs Sample Size")
 ```
 Once again, bootstrapping by residuals performs poorly compared to bootstrapping by pairs.
 
@@ -500,7 +499,7 @@ for(n in ns){
   }
   rel_errors <- c(rel_errors, (var(bootstrap_betas) - true_variance)/var(bootstrap_betas))
 }
-plot(ns, rel_errors)
+plot(ns, rel_errors, xlab="n", ylab="Relative Error", main="Relative Error vs Sample Size")
 ```
 
 ```{r}
@@ -536,9 +535,59 @@ for(n in ns){
   }
   rel_errors <- c(rel_errors, (var(bootstrap_betas) - true_variance)/var(bootstrap_betas))
 }
-plot(ns, rel_errors)
+plot(ns, rel_errors, xlab="n", ylab="Relative Error", main="Relative Error vs Sample Size")
 ```
 Even with a symmetric distribution, the heavy tails of a $t$-distribution with $3$ degrees of freedom cause problems for bootstrapping by residuals. 
+
+To illustrate this technique on a real dataset, we consider the hourly wage vs education data from Farber's 1976 Current Population Survey.
+```{r}
+if(!require(wooldridge)){
+    install.packages("wooldridge")
+}
+library(wooldridge)
+data("wage1")
+if(!require(car)){
+    install.packages("car")
+}
+
+fit <- lm(wage ~ poly(educ, 2), wage1)
+plot(wage ~ educ, wage1)
+curve(predict(fit, newdata = data.frame(educ=x)), add=T)
+
+car::ncvTest(fit)
+
+plot(fitted(fit), resid(fit))
+
+qqnorm(resid(fit))
+qqline(resid(fit))
+```
+We see with the dataset of incomes vs savings can be modelled with a quadratic fit. However, the data is clearly heavily heteroskedastic, and the typical $t$ confidence intervals for the linear and quadratic covariates would not be valid. We thus perform bootstrapping on pairs: 
+
+```{r}
+set.seed(0)
+data("wage1")
+
+y <- wage1$wage
+X <- wage1$educ
+n = length(y)
+
+betahat <- coef(lm(y ~ X))[2]
+
+bootstrap_linear_betas <- c()
+bootstrap_quadratic_betas <- c()
+for(i in 1:1000){
+  boot <- sample(1:n, n, replace=TRUE)
+  y_boot <- y[boot]
+  X_boot <- X[boot]
+  bootstrap_beta <- coef(lm(y_boot~poly(X_boot, 2)))
+  bootstrap_linear_betas <- c(bootstrap_linear_betas, bootstrap_beta[2])
+  bootstrap_quadratic_betas <- c(bootstrap_quadratic_betas, bootstrap_beta[3])
+}
+confint(lm(y ~ poly(X,2)))[2:3,]
+quantile(bootstrap_linear_betas, c(0.025, 0.975))
+quantile(bootstrap_quadratic_betas, c(0.025, 0.975))
+```
+We see that bootstrapping actually yielded a slightly wider interval for the linear component and a slightly smaller confidence interval for the quadratic component. 
 
 ## Section II: Theory {#sec2}
 <!-- we will use this section sort of as an appendix. Put all proofs here with a link and then reference them from the summary-->
