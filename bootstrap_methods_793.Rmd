@@ -53,7 +53,7 @@ We now examine the approximate bias and variance of our bootstrap estimators. We
 
 In a one-sample situation, define $N_i^* = |\{j \,:\, X_j^* = X_i\}|$, the number of bootstrap samples that match the $i$th observation.
 Note that $\bb{N}^* \sim \operatorname{Multinom}(n; \bb{1}/n)$ so that $\E[\bb{N}^*] = \bb{1}$ and $\var[\bb{N}^*] = \bb{I} - \bb{1}^\top\bb{1}/n$. 
-Then define $\bb{P}^* = \bb{N}^*/n$ as a ``normalized" version of $\bb{N}^*$ that estimates probabilities of the bootstrap samples that match the $i$th observation.
+Then define $\bb{P}^* = \bb{N}^*/n$ as a "normalized" version of $\bb{N}^*$ that estimates probabilities of the bootstrap samples that match the $i$th observation.
 Note, then, that
 \begin{equation}
   \E[\bb{P}^*] = \bb{1}/n \quad\quad \var[\bb{P}^*] = \bb{I}/n^2 - \bb{11}^\top/n^3.
@@ -156,7 +156,7 @@ The above expressions for the bias and variance are exactly those given by the i
   \Delta_iR^* = (n-1)\left[\frac{1}{n}\sum_{j=1}^n R^*\left(\frac{\bb{1}-\bb{e}_j}{n-1}\right) - R^*\left(\frac{\bb{1}-\bb{e}_i}{n-1}\right)\right],
 \end{equation*}
 where $\bb{e}_j$ is the $j$th standard basis vector.
-Note that the above definition of $\Delta_iR^*$ is simply a direct implementation of the Jackknife's ``leave one out" procedure, but written in the language of Bootstrap.
+Note that the above definition of $\Delta_iR^*$ is simply a direct implementation of the Jackknife's "leave one out" procedure, but written in the language of Bootstrap.
 In this way, the bias and variance variance estimates from the ordinary Jackknife are instead given by 
 \begin{align}
   \E[R(\bb{X}^*, \widehat{F})] &\approx \frac{1}{2(n-1)}\overline{\bb{V}} \label{eq:jbias} \\
@@ -185,7 +185,7 @@ Dividing through by $D_iR^*(\bb{1}/n)$ again yields that $\Delta_iR^*/D_iR^*(\bb
 ### Regression models {#reg}
 Perhaps one of the most common uses of statistics is fitting linear regression models. Consider the simple linear model $\bb{Y} = \bb{X}\beta + \varepsilon$ where $\bb{Y} \in \R^n$, $\beta \in \R$, and $\varepsilon \sim N(\bb{0}, \sigma^2\bb{I})$ for unknown residual variance $\sigma^2$. Then we know that the least-squares estimator $\widehat{\beta}$ has variance $\sigma^2(\bb{X}^\top\bb{X})^{-1}$. 
 
-We can also obtain an estimate of $\var[\widehat{\beta}]$ via bootstrapping. Given the sample $y_1, \ldots, y_n$, we can construct the residuals $\widehat{\varepsilon}_i = y_i - X_i\widehat{\beta}$. We define $\widehat{F}$ to be the empirical distribution of these residuals. We can then construct bootstrap samples $Y_i^* = X_i\widehat{\beta} + \varepsilon_i^*$ where $\varepsilon_i^* \overset{iid}{\sim} \widehat{F}$. This then lets us construct a bootstrap estimate $\widehat{\beta}^*$ of $\beta$. 
+We can also obtain an estimate of $\var[\widehat{\beta}]$ via bootstrapping, though there are multiple ways to go about bootstrapping in a regression context. One method is as follows: Given the sample $y_1, \ldots, y_n$, we can construct the residuals $\widehat{\varepsilon}_i = y_i - X_i\widehat{\beta}$. We define $\widehat{F}$ to be the empirical distribution of these residuals. We can then construct bootstrap samples $Y_i^* = X_i\widehat{\beta} + \varepsilon_i^*$ where $\varepsilon_i^* \overset{iid}{\sim} \widehat{F}$. This then lets us construct a bootstrap estimate $\widehat{\beta}^*$ of $\beta$. 
 ```{r}
 set.seed(0)
 
@@ -220,10 +220,325 @@ mean(variance_diff)
 ```
 From the above simulation, we find that bootstrap tends to underestimate the variance (with 2/3 of the bootstrap variance estimates being underestimations). However, when it does overestimate, we can see that it often severely overestimates---with several estimates even being off by a factor of 6 or more. It turns out, then, that the bootstrap variance estimates are close the the true variance. Furthermore, increasing the sample size doesn't appear to have much of an impact on the relative error in the variance estimate.
 
-From this, one advantage of bootstrap becomes clear: If the distribution of the residual variance is unknown, the nonparametric bootstrap still allows us to obtain estimates for the variance of $\widehat{\beta}$.
+Another method (not covered by Efron, but introduced by Freedman 1981) is to resample from the pairs $(Y_i, X_i)$ rather than from the residuals. The simulation study now looks like the following:
+```{r}
+set.seed(0)
 
-We can repeat the above simulation, but this time with heteroskedasticity, in which the residual variance depends on the data $\bb{X}$, and a non-normal distribution:
+beta <- 5
+sigma <- 10
 
+variance_diff <- c()
+ns <- 2:100
+for(n in ns){
+  X <- matrix(rnorm(n), nrow=n)
+  y <- X * beta + rnorm(n, sd=sigma)
+  
+  betahat <- solve(t(X)%*%X)%*%t(X)%*%y
+  
+  true_variance = sigma^2 * solve(t(X)%*%X)
+  
+  eps_hat <- y - X%*%betahat
+  
+  N <- 1000
+  bootstrap_betas <- c()
+  for(i in 1:N){
+    boot <- sample(1:n, n, replace=TRUE)
+    y_boot <- y[boot]
+    X_boot <- X[boot]
+    bootstrap_betas <- c(bootstrap_betas, solve(t(X_boot)%*%X_boot)%*%t(X_boot)%*%y_boot)
+  }
+  variance_diff <- c(variance_diff, (var(bootstrap_betas)-true_variance)/true_variance)
+}
+plot(ns, variance_diff, xlab="n", ylab="Relative Error", main="Relative Error in Variance Estimate vs Sample Size")
+
+quantile(variance_diff, 0.5)
+quantile(variance_diff, 2/3)
+mean(variance_diff)
+```
+This method is also unbiased for the true variance, but is also much less variable. Though it also can vary wildly for very small $n$, even a small sample size of about $10$ starts yielding very close results. For this reason, bootstrap ``by pairs" is often favored over bootstrap by residuals. 
+
+These two methods also accurately estimate covariances:
+```{r}
+set.seed(0)
+
+beta <- c(5, 10)
+sigma <- 10
+
+cov_diff <- c()
+ns <- 3:1000
+for(n in ns){
+  X <- matrix(rnorm(n*2, sd=0.1), nrow=n)
+  y <- X %*% beta + rnorm(n, sd=sigma)
+  
+  betahat <- solve(t(X)%*%X)%*%t(X)%*%y
+  
+  true_covariance = sigma^2 * solve(t(X)%*%X)[1, 2]
+  
+  eps_hat <- y - X%*%betahat
+  
+  N <- 1000
+  bootstrap_betas <- c()
+  for(i in 1:N){
+    y_boot <- X%*%betahat + sample(eps_hat, 1)
+    bootstrap_betas <- cbind(bootstrap_betas, solve(t(X)%*%X)%*%t(X)%*%y_boot)
+  }
+  cov_diff <- c(cov_diff, (cov(bootstrap_betas[1,], bootstrap_betas[2,])-true_covariance)/true_covariance)
+}
+plot(ns, cov_diff, xlab="n", ylab="Relative Error", main="Relative Error in Covariance Estimate vs Sample Size")
+```
+```{r}
+set.seed(0)
+
+beta <- c(5, 10)
+sigma <- 10
+
+cov_diff <- c()
+ns <- 10:1000
+for(n in ns){
+  X <- matrix(rnorm(n*2, sd=0.1), nrow=n)
+  y <- X %*% beta + rnorm(n, sd=sigma)
+  
+  betahat <- solve(t(X)%*%X)%*%t(X)%*%y
+  
+  true_covariance = sigma^2 * solve(t(X)%*%X)[1, 2]
+  
+  eps_hat <- y - X%*%betahat
+  
+  N <- 1000
+  bootstrap_betas <- c()
+  for(i in 1:N){
+    boot <- sample(1:n, n, replace=TRUE)
+    X_boot <- X[boot,]
+    y_boot <- y[boot]
+    bootstrap_betas <- cbind(bootstrap_betas, solve(t(X_boot)%*%X_boot)%*%t(X_boot)%*%y_boot)
+  }
+  cov_diff <- c(cov_diff, (cov(bootstrap_betas[1,], bootstrap_betas[2,])-true_covariance)/true_covariance)
+}
+plot(ns, cov_diff, xlab="n", ylab="Relative Error", main="Relative Error in Covariance Estimate vs Sample Size")
+```
+Both bootstrapping by residuals and bootstrapping by pairs have some issues estimating covariances regardless of the sample size; the outliers in bootstrapping by pairs tend to be smaller in magnitude, however. In general though, these covariance estimates are once again unbiased, demonstrating that bootstrap estimates of variances is still valid for vector parameters $\beta$. For simplicity, we will focus on scalar parameters $\beta$ for the rest of the post. 
+
+One advantage of bootstrap is clear: If the distribution of the residual variance is unknown, the nonparametric bootstrap will still allow us to obtain estimates for the variance of $\widehat{\beta}$.
+
+We can repeat the above simulations, but this time with heteroskedasticity, in which the residual variance depends on the data $\bb{X}$. In particular, we consider the case where the residuals $\varepsilon_i$ satisfy $\var[\varepsilon_i] = X_i^3$.
+```{r}
+set.seed(0)
+
+ns <- (1:50)*10
+rel_errors <- c()
+for(n in ns){
+  beta <- 5
+  
+  N <- 1000
+  betahats <- c()
+  for(i in 1:N){
+    X <- matrix(rnorm(n, mean=100, sd=10), nrow=n)
+    y <- X * beta + rnorm(n, sd=X^1.5)
+    
+    betahats <- c(betahats, solve(t(X)%*%X)%*%t(X)%*%y)
+  }
+  
+  true_variance <- var(betahats)
+  
+  X <- matrix(rnorm(n, mean=100, sd=10), nrow=n)
+  y <- X * beta + rnorm(n, sd=X^1.5)
+  betahat <- solve(t(X)%*%X)%*%t(X)%*%y
+  
+  eps_hat = y - X%*%betahat
+  
+  bootstrap_betas <- c()
+  for(i in 1:N){
+    y_boot <- X%*%betahat + sample(eps_hat, 1)
+    bootstrap_betas <- c(bootstrap_betas, solve(t(X)%*%X)%*%t(X)%*%y_boot)
+  }
+  rel_errors <- c(rel_errors, (var(bootstrap_betas) - true_variance)/var(bootstrap_betas))
+}
+plot(ns, rel_errors)
+```
+We see that under heteroskedasticity, bootstrap by residuals performs exceptionally poorly, tending to a relative error of $1$ as the sample size increases. On the other hand, bootstrap by pairs fares much better:
+```{r}
+set.seed(0)
+
+ns <- 10:200
+rel_errors <- c()
+for(n in ns){
+  beta <- 5
+  
+  N <- 5000
+  betahats <- c()
+  for(i in 1:N){
+    X <- matrix(rnorm(n, mean=100, sd=10), nrow=n)
+    y <- X * beta + rnorm(n, sd=X^1.5)
+    
+    betahats <- c(betahats, solve(t(X)%*%X)%*%t(X)%*%y)
+  }
+  
+  true_variance <- var(betahats)
+  
+  X <- matrix(rnorm(n, mean=100, sd=10), nrow=n)
+  y <- X * beta + rnorm(n, sd=X^1.5)
+  betahat <- solve(t(X)%*%X)%*%t(X)%*%y
+  
+  bootstrap_betas <- c()
+  for(i in 1:N){
+    boot <- sample(1:n, n, replace=TRUE)
+    y_boot <- y[boot]
+    X_boot <- X[boot]
+    bootstrap_betas <- c(bootstrap_betas, solve(t(X_boot)%*%X_boot)%*%t(X_boot)%*%y_boot)
+  }
+  rel_errors <- c(rel_errors, (var(bootstrap_betas) - true_variance)/var(bootstrap_betas))
+}
+plot(ns, rel_errors)
+```
+This method seems to underestimate the variance, and seems to perform poorly with small sample sizes (unlike in the homoskedastic case). However, it fairly quickly converges to the true variance as the sample size increases; a sample size of about $75$ seems to be more than sufficient in this case. This demonstrates the power of bootstrap by pairs: A robustness to heteroskedasticity that allows for valid variance estimation for large samples. 
+
+We can also examine the effect of a skewed distribution of the residuals:
+```{r}
+set.seed(0)
+
+chisq_df <- 5
+ns <- (1:50)*10
+rel_errors <- c()
+for(n in ns){
+  beta <- 5
+  
+  N <- 1000
+  betahats <- c()
+  for(i in 1:N){
+    X <- matrix(rnorm(n, mean=100, sd=10), nrow=n)
+    y <- X * beta + (rchisq(n, df=chisq_df) - chisq_df)
+    
+    betahats <- c(betahats, solve(t(X)%*%X)%*%t(X)%*%y)
+  }
+  
+  true_variance <- var(betahats)
+  
+  X <- matrix(rnorm(n, mean=100, sd=10), nrow=n)
+  y <- X * beta + (rchisq(n, df=chisq_df) - chisq_df)
+  betahat <- solve(t(X)%*%X)%*%t(X)%*%y
+  
+  eps_hat = y - X%*%betahat
+  
+  bootstrap_betas <- c()
+  for(i in 1:N){
+    y_boot <- X%*%betahat + sample(eps_hat, 1)
+    bootstrap_betas <- c(bootstrap_betas, solve(t(X)%*%X)%*%t(X)%*%y_boot)
+  }
+  rel_errors <- c(rel_errors, (var(bootstrap_betas) - true_variance)/var(bootstrap_betas))
+}
+plot(ns, rel_errors)
+```
+
+```{r}
+set.seed(0)
+
+ns <- 10:200
+chisq_df <- 5
+rel_errors <- c()
+for(n in ns){
+  beta <- 5
+  
+  N <- 5000
+  betahats <- c()
+  for(i in 1:N){
+    X <- matrix(rnorm(n, mean=100, sd=10), nrow=n)
+    y <- X * beta + (rchisq(n, df=chisq_df) - chisq_df)
+    
+    betahats <- c(betahats, solve(t(X)%*%X)%*%t(X)%*%y)
+  }
+  
+  true_variance <- var(betahats)
+  
+  X <- matrix(rnorm(n, mean=100, sd=10), nrow=n)
+  y <- X * beta + (rchisq(n, df=chisq_df) - chisq_df)
+  betahat <- solve(t(X)%*%X)%*%t(X)%*%y
+  
+  bootstrap_betas <- c()
+  for(i in 1:N){
+    boot <- sample(1:n, n, replace=TRUE)
+    y_boot <- y[boot]
+    X_boot <- X[boot]
+    bootstrap_betas <- c(bootstrap_betas, solve(t(X_boot)%*%X_boot)%*%t(X_boot)%*%y_boot)
+  }
+  rel_errors <- c(rel_errors, (var(bootstrap_betas) - true_variance)/var(bootstrap_betas))
+}
+plot(ns, rel_errors)
+```
+Once again, bootstrapping by residuals performs poorly compared to bootstrapping by pairs.
+
+Finally, we examine the effects of a heavy-tailed distribution for the residuals:
+```{r}
+set.seed(0)
+
+t_df <- 3
+ns <- (1:50)*10
+rel_errors <- c()
+for(n in ns){
+  beta <- 5
+  
+  N <- 1000
+  betahats <- c()
+  for(i in 1:N){
+    X <- matrix(rnorm(n, mean=100, sd=10), nrow=n)
+    y <- X * beta + rt(n, df=t_df)
+    
+    betahats <- c(betahats, solve(t(X)%*%X)%*%t(X)%*%y)
+  }
+  
+  true_variance <- var(betahats)
+  
+  X <- matrix(rnorm(n, mean=100, sd=10), nrow=n)
+  y <- X * beta + rt(n, df=t_df)
+  betahat <- solve(t(X)%*%X)%*%t(X)%*%y
+  
+  eps_hat = y - X%*%betahat
+  
+  bootstrap_betas <- c()
+  for(i in 1:N){
+    y_boot <- X%*%betahat + sample(eps_hat, 1)
+    bootstrap_betas <- c(bootstrap_betas, solve(t(X)%*%X)%*%t(X)%*%y_boot)
+  }
+  rel_errors <- c(rel_errors, (var(bootstrap_betas) - true_variance)/var(bootstrap_betas))
+}
+plot(ns, rel_errors)
+```
+
+```{r}
+set.seed(0)
+
+ns <- 10:200
+t_df <- 3
+rel_errors <- c()
+for(n in ns){
+  beta <- 5
+  
+  N <- 5000
+  betahats <- c()
+  for(i in 1:N){
+    X <- matrix(rnorm(n, mean=100, sd=10), nrow=n)
+    y <- X * beta + rt(n, df=t_df)
+    
+    betahats <- c(betahats, solve(t(X)%*%X)%*%t(X)%*%y)
+  }
+  
+  true_variance <- var(betahats)
+  
+  X <- matrix(rnorm(n, mean=100, sd=10), nrow=n)
+  y <- X * beta + rt(n, df=t_df)
+  betahat <- solve(t(X)%*%X)%*%t(X)%*%y
+  
+  bootstrap_betas <- c()
+  for(i in 1:N){
+    boot <- sample(1:n, n, replace=TRUE)
+    y_boot <- y[boot]
+    X_boot <- X[boot]
+    bootstrap_betas <- c(bootstrap_betas, solve(t(X_boot)%*%X_boot)%*%t(X_boot)%*%y_boot)
+  }
+  rel_errors <- c(rel_errors, (var(bootstrap_betas) - true_variance)/var(bootstrap_betas))
+}
+plot(ns, rel_errors)
+```
+Even with a symmetric distribution, the heavy tails of a $t$-distribution with $3$ degrees of freedom cause problems for bootstrapping by residuals. 
 
 ## Section II: Theory {#sec2}
 <!-- we will use this section sort of as an appendix. Put all proofs here with a link and then reference them from the summary-->
