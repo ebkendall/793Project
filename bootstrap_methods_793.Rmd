@@ -63,14 +63,51 @@ Since each $N_{(i)}^*$ can take a value between 0 and $n$ with equal probability
 P(N_{(1)}^* + ...+ N_{(l)}^* < m) &= P(W^* \leq m-1)\\
 &= \sum_{i=0}^{m-1} \binom{n}{l} \left(\frac{l}{n}\right)^{i}\left(1 - \frac{l}{n}\right)^{n-i}
 \end{align*}
-If this is not immediately clear, ...
+If this is not immediately clear, the goal is to completely describe the event where the bootstrap median $X_{(m)}^*$ is greater than some chosen sample observation $x_{(l)}$. While the actual numeric value is important in determining the order of the observations, we can think of putting the original $n$ observations on a numberline and then assigning them an index number from 1 to $n$. The median is just the index right in the middle with $\left\lfloor\frac{n}{2}\right\rfloor$ indeces to the left and right of it. Since bootstrap samples with replacement $n$ times from the original ordered data sample, we can describe the event of interest by counting the total number of times we observe the first $l$ indices and then checking if it is less than or equal to $m-1 = \left\lfloor\frac{n}{2}\right\rfloor$. If it is true, then we know $X^*_{(m)} > x_{(l)}$.
 
-Now, we can show the following probability statement
+Now, we can show the following probability statement **FINISH**
 \begin{align*}
 P(R^* = x_{(l)} - x_{(m)}) &= P(X_{(m)}^* - x_{(m)} = x_{(l)} - x_{(m)}) \\
 &= P(X_{(m)}^* = x_{(l)})\\
-&= 
+&= \vdots
 \end{align*}
+
+Using the probability distribution derived above, we can produce the following table as follows. Let $n=13$ and $m=7$ 
+```{r}
+m = matrix(nrow=2,ncol=6)
+for(i in 1:6) {
+  m[1,i] = pbinom(6, 13, (i)/13) - pbinom(6,13, (i+1)/13)
+  m[2,i] = pbinom(6, 13, (13-i-1)/13) - pbinom(6,13, (13-i)/13)
+}
+print(round(m, digits=4))
+```
+This example can be abstracted to larger, odd-numbered sample sizes which means we can estimate expected squared error loss of the sample median given by the equation
+$$E_F(R^2) = E_F[(t(\bb{X}) - \theta(F))^2]$$
+because we have an estimated discrete probability distribution now. It is worth noting that when the density of $F$, $f(x)$, is bounded and continuous, then
+$$nE_*(R^{*^2}) \to \frac{1}{4}f^2(\theta) \quad \text{ as } \quad n\to \infty$$
+where $f(\theta)$ is defined as computing the density of $F$ at the median $\theta(F)$.
+
+Next, we will consider an example using a symmetric probability distribution. We will define $\hat F_{SYM}$ by being symmetric about the median $x_{(m)}$ and having the probability mass of $\frac{1}{2n-1}$ for each of the $2n-1$ support value, namely $x_{(1)}, ..., x_{(n)}, 2x_{(m)}-x_{(1)}, ..., 2x_{(m)} - x_{(n)}$. Call $z$ the bootstrap sample elements with ordering $z_{(1)} \leq ... \leq z_{(2n-1)}$. Then, using the same derivation of the probability mass function for $R^*$, let $l \in [1,2n-1]$
+$$P_*(R^* = z_{(l)} - x_{(m)}) = P\left(Bin\left(n,\frac{l-1}{2n-1}\right) \leq m-1\right) - P\left(Bin\left(n,\frac{l}{2n-1}\right) \leq m-1\right)$$
+It is worth noting that we are only considering a sample size of $n$ because the distribution we are sampling from is symmetric, therefore, there exists only $n$ values that we can sample the bootstrap from, but there exists a total of $2n-1$ possible "indices" from which to sample from.
+
+Again, suppose $n=13$, then we can replicate the table as follows
+```{r}
+m = matrix(nrow=1,ncol=10)
+for(i in 1:10) {
+  m[1,i] = pbinom(6, 13, (i+2)/25) - pbinom(6,13, (i+3)/25)
+}
+w = matrix(data=m, nrow=2,byrow = T)
+print(round(w, digits=4))
+```
+
+Now, we transition into a different way of doing the bootstrap sampling. Rather than taking random samples from $\bb{X} = (x_1,...,x_n)$, we can take
+$$X_i^* = \bar x + c[x_{I_i} - \bar x + \hat\sigma Z_i]$$
+where $I_i$ is a random index chosen indepedently from $\{1,2,...,n\}$ and $Z_i$ is a predetermined random variable with mean 0 and variance denoted by $\sigma_Z^2$. Then, $\bar x, \hat \sigma,$ and $c$ are chosen such that $E(X_i^*) = \bar x$ and $Var(X_i^*) = \hat \sigma^2$. The motivation behind this new sampling technique is to not rely on strict assumptions on the function form of the distribution. In other words, assuming symmetry like before is very strict. Not only does the sampling procedure differ, but the manner to check how reliable this sampling procedure changes. We now switch from investigating squared error loss to absolute error loss with the random variable given by
+$$R(\bb{X}, F) = \frac{|t(\bb{X}) - \theta(F)|}{\sigma(F)} \implies R^* = \frac{|t(\bb{X^*}) - \theta(\hat F)|}{\hat\sigma}$$
+You may be asking why the change? This is because we want to gain more numerical stability in our calculation. We are still studying the true median $\theta(F)$, however, now the bootstrapped quantity is the absolute error relative to population standard deviation $\sigma(F)$ which lets $R^*$ be invariant to any scaled changes in $\hat \sigma$ estimating the true standard deviation.
+
+How do we actually test if this new bootstrap quantity is worth studying? We will do Monte Carlo simulations to test this in the following example.
 
 ### Relationship with the jackknife {#relJack}
 We now examine the approximate bias and variance of our bootstrap estimators. We show that these approximations agree exactly with the approximations given by the \textit{infinitesimal Jackknife} method, and we also show agreement with the ordinary Jackknife up to a factor of $1 + O(1/n)$.
