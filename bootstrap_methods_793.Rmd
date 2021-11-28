@@ -2,9 +2,9 @@
 title: "ST793 Final Project"
 author: "Emmett Kendall, Neil Dey"
 date: "11/18/2021"
-header-includes: 
-  - \usepackage{bm} 
-output: 
+header-includes:
+  - \usepackage{bm}
+output:
   html_document
 ---
 \newcommand{\bb}[1]{\boldsymbol{#1}}
@@ -21,9 +21,9 @@ knitr::opts_chunk$set(echo = TRUE)
 # _Bootstrap Methods: Another look at the Jackknife_
 ### B. Efron
 
-*** 
+***
 
-## Introduction 
+## Introduction
 The format of this blog post will be as follows. In [Section I](#sec1) we begin with a summary and clear description of the main topics discussed in Efron's paper. In [Section II](#sec2), we will include the proofs of major theorems and remarks made. Lastly, in [Section III](#sec3), we will include illustrative examples and simulations that help the reader understand the impact and importance of Bootstrap.
 
 ## Section I: Summary of article {#sec1}
@@ -35,7 +35,7 @@ R(\bb{X}, F) &= \frac{t(\bb{X}) - \widehat{Bias}(t) - \theta(F)}{\sqrt{\widehat{
 \end{align*}
 where $t(\bb{X})$ estimates $\theta(F)$. What is worth noting is that jackknife approximates the distribution of $R$ by sampling $n-1$ times \textbf{with} replacement. Bootstrap is then introduced and follows the general framwork below
 
-1. Given the existing data $\bb{X} = (x_1,...,x_n)$, assign each data point probability $1/n$ such that selecting an observation from the sample has equal probability. 
+1. Given the existing data $\bb{X} = (x_1,...,x_n)$, assign each data point probability $1/n$ such that selecting an observation from the sample has equal probability.
 2. Sample from $\bb{X}$ \textbf{with} replacement to get $\bb{X}^*$  which has data points ${x_1^*, ..., x_n^*} \subseteq \bb{X}$. Do this multiple times since each $\bb{X_i^*}$ will be from the sampling distribution $\hat{F}$.
 3. Now we get the \textit{bootstrap distribution} which is the "empirical distribution" for $R(\bb{X},F)$, namely $R^* = R(\bb{X^*}, \hat F)$.
 
@@ -46,20 +46,44 @@ The whole motivation is that if the resampled distribution $\hat F$ is remotely 
 3. Taylor series approximations.
 
 ### Estimating the median {#med}
-Consider a simple illustration. Suppose, for the unknown distribution $F$, we are interested in uncovering the median. Call $\theta(F)$ the true median, and let $t(\bb{X}) = X_{(m)}$ be the estimator, i.e. the sample median. For ease, assume the sample size, $n$, is odd ($\exists m\in \mathbb{Z}^+$ s.t. $n=2m+1$).
+Consider a simple illustration. Suppose, for the unknown distribution $F$, we are interested in uncovering the median. Call $\theta(F)$ the true median, and let $t(\bb{X}) = X_{(m)}$ be the estimator, i.e. the sample median. For ease, assume the sample size, $n$, is odd ($\exists m\in \mathbb{Z}^+$ s.t. $n=2m+1$). Define
+$$R(\bb{X}, F) = X_{(m)} - \theta(F)$$
+
+From the sample, $\bb{X}$ we can take a bootstrap sample (sampling from the observed $\bb{x}$ with replacement) $\bb{X^*} = \bb{x^*}$ and count the number of times each original observation $x_i$ occurs in the bootstrap sample. Doing this will provide us with a multionomial distribution where we define $N_i^*$ as the number of times $X_i^* = x_i$ in the bootstrap sample. It is worth noting that $N_i^*$ need not be strictly greater than 0 since it is a possibility to not observe an $x_i$ from the original sample. Thus, we can apply this notation now to the ordered sample, namely
+$$x_{(1)} \leq ... \leq x_{(n)} \implies N_{(1)}^*,..., N_{(n)}^*$$
+
+Now, we can define the bootstrap $R$ as
+$$R^* = R(\bb{X^*}, \hat F) = X_{(m)}^* - x_{(m)}$$
+where $x_{(m)}$ is the observed median. Next, we investigate the probabilities associated with $R^*$ as it is important in getting the random variable's expected value and other summaries. First, let $l \in (1,n)$. Then
+\begin{align*}
+P(X^*_{(m)} > x_{(l)}) &= P(N_{(1)}^* + ...+ N_{(l)}^* < m)
+\end{align*}
+Since each $N_{(i)}^*$ can take a value between 0 and $n$ with equal probability and each $N_{(i)}^*$ is assumed independent, then we know that $\sum_{i=1}^l N_{(i)}^* \sim Binomial\left(n, \frac{l}{n}\right)$. Therefore, call $W^* = \sum_{i=1}^l N_{(i)}^*$ and note that since we are in a discrete setting, we can rewrite the probability statement as
+\begin{align*}
+P(N_{(1)}^* + ...+ N_{(l)}^* < m) &= P(W^* \leq m-1)\\
+&= \sum_{i=0}^{m-1} \binom{n}{l} \left(\frac{l}{n}\right)^{i}\left(1 - \frac{l}{n}\right)^{n-i}
+\end{align*}
+If this is not immediately clear, ...
+
+Now, we can show the following probability statement
+\begin{align*}
+P(R^* = x_{(l)} - x_{(m)}) &= P(X_{(m)}^* - x_{(m)} = x_{(l)} - x_{(m)}) \\
+&= P(X_{(m)}^* = x_{(l)})\\
+&= 
+\end{align*}
 
 ### Relationship with the jackknife {#relJack}
 We now examine the approximate bias and variance of our bootstrap estimators. We show that these approximations agree exactly with the approximations given by the \textit{infinitesimal Jackknife} method, and we also show agreement with the ordinary Jackknife up to a factor of $1 + O(1/n)$.
 
 In a one-sample situation, define $N_i^* = |\{j \,:\, X_j^* = X_i\}|$, the number of bootstrap samples that match the $i$th observation.
-Note that $\bb{N}^* \sim \operatorname{Multinom}(n; \bb{1}/n)$ so that $\E[\bb{N}^*] = \bb{1}$ and $\var[\bb{N}^*] = \bb{I} - \bb{1}^\top\bb{1}/n$. 
+Note that $\bb{N}^* \sim \operatorname{Multinom}(n; \bb{1}/n)$ so that $\E[\bb{N}^*] = \bb{1}$ and $\var[\bb{N}^*] = \bb{I} - \bb{1}^\top\bb{1}/n$.
 Then define $\bb{P}^* = \bb{N}^*/n$ as a "normalized" version of $\bb{N}^*$ that estimates probabilities of the bootstrap samples that match the $i$th observation.
 Note, then, that
 \begin{equation}
   \E[\bb{P}^*] = \bb{1}/n \quad\quad \var[\bb{P}^*] = \bb{I}/n^2 - \bb{11}^\top/n^3.
 \end{equation}
 
-Let us suppose that the random variable of interest, $R(\bb{X}, F)$, is invariant to with respect to the ordering of $X_1, \ldots, X_n$. 
+Let us suppose that the random variable of interest, $R(\bb{X}, F)$, is invariant to with respect to the ordering of $X_1, \ldots, X_n$.
 That is, we have \textit{exchangability} of the observations.
 With this assumption, note that we can recover both $\bb{X}$ (up to permutation) and $\widehat{F}$ when we are given $\bb{P}^*$.
 Hence, it makes sense to consider the random variable of interest as simply a function of $\bb{P}^*$:
@@ -96,13 +120,13 @@ To prove that $DR^*(\bb{1}/n)\bb{1} = 0$, we simply apply chain rule several tim
        &= DR\left(\frac{\bb{P}}{\sum P_i}\right) \cdot \frac{1}{(\sum P_i)^2}\left(\bb{I}\sum_{i=1}^n P_i - \bb{1}^\top \otimes \bb{P}\right) \\
        &= \frac{1}{(\sum P_i)^2}\begin{bmatrix}(\sum P_i)\cdot D_1R\left(\frac{\bb{P}}{\sum P_i}\right) - P_1\sum\limits_{j=1}^n D_j{R}\left(\frac{\bb{P}}{\sum P_i}\right) & \cdots & (\sum P_i)\cdot D_nR\left(\frac{\bb{P}}{\sum P_i}\right) - P_n\sum\limits_{j=1}^n D_j{R}\left(\frac{\bb{P}}{\sum P_i}\right)\end{bmatrix}.
 \end{align*}
-Evaluating at $\bb{1}/n$, we thus have that 
+Evaluating at $\bb{1}/n$, we thus have that
 \begin{equation*}
   DR^*(\bb{1}/n) = \begin{bmatrix}D_1R(\bb{1}/n) - \frac{1}{n}\sum\limits_{j=1}^n D_jR(\bb{1}/n) & \cdots & D_nR(\bb{1}/n) - \frac{1}{n}\sum\limits_{j=1}^n D_jR(\bb{1}/n)\end{bmatrix}
 \end{equation*}
 and so
 \begin{align*}
-  DR^*(\bb{1}/n)\bb{1} 
+  DR^*(\bb{1}/n)\bb{1}
   &= \sum_{i=1}^n\left(D_iR(\bb{1}/n) - \frac{1}{n}\sum\limits_{j=1}^n D_jR(\bb{1}/n)\right) \\
   &= \sum_{i=1}^n D_iR(\bb{1}/n) - \sum_{j=1}^n D_jR(\bb{1}/n) \\
   &= 0
@@ -122,9 +146,9 @@ Summing the elements of the $k$th row, we find that
   H_kR^*(\bb{1}/n)\bb{1} &= -nD_kR(\bb{1}/n) + \sum_{i=1}^n D_iR(\bb{1}/n) + 0 \\
     &= -n D_kR^*(\bb{1}/n)
 \end{align*}
-as desired, as the term involving the Hessian matrix of $R$ is zero by a tedious but straightforward calculation. 
+as desired, as the term involving the Hessian matrix of $R$ is zero by a tedious but straightforward calculation.
 
-Having established these facts, we can now calculate the expectation and variance of $R(\bb{P}^*)$. For the expectation, we have that 
+Having established these facts, we can now calculate the expectation and variance of $R(\bb{P}^*)$. For the expectation, we have that
 \begin{align*}
   \E[R^*(\bb{P}^*)]
   &\approx R^*(\bb{1}/n) + DR^*(\bb{1}/n)\E\left[(\bb{P}^*-\bb{1}/n)\right] + \frac{1}{2}\E\left[(\bb{P}^* - \bb{1}/n)^\top HR^*(\bb{1}/n)(\bb{P}^* - \bb{1}/n)\right] \\
@@ -141,7 +165,7 @@ where $\overline{\bb{V}} = \frac{1}{n}\sum H_{ii}R^*(\bb{1}/n)$. Note the use of
 
 Similarly with the variance (this time only Taylor expanding to first order), we have that
 \begin{align*}
-  \var[R^*(\bb{P}^*)] 
+  \var[R^*(\bb{P}^*)]
   &\approx \var[R^*(\bb{1}/n) + DR^*(\bb{1}/n)(\bb{P}^*-\bb{1}/n)] \\
   &= DR^*(\bb{1}/n)\var[\bb{P}^*-\bb{1}/n]DR^*(\bb{1}/n)^\top \\
   &= DR^*(\bb{1}/n)(\bb{I}/n^2 + \bb{11}^\top/n^3)DR^*(\bb{1}/n)^\top
@@ -157,13 +181,13 @@ The above expressions for the bias and variance are exactly those given by the i
 \end{equation*}
 where $\bb{e}_j$ is the $j$th standard basis vector.
 Note that the above definition of $\Delta_iR^*$ is simply a direct implementation of the Jackknife's "leave one out" procedure, but written in the language of Bootstrap.
-In this way, the bias and variance variance estimates from the ordinary Jackknife are instead given by 
+In this way, the bias and variance variance estimates from the ordinary Jackknife are instead given by
 \begin{align}
   \E[R(\bb{X}^*, \widehat{F})] &\approx \frac{1}{2(n-1)}\overline{\bb{V}} \label{eq:jbias} \\
   \var[R(\bb{X}^*, \widehat{F})] &\approx \frac{1}{n(n-1)}\sum_{i=1}^n \left(\Delta_iR^*\right)^2. \label{eq:jvar}
 \end{align}
 
-We see that the bootstrap bias estimate differs from the Jackknife bias estimate by a factor of $n/(n-1) = 1 + O(1/n)$. 
+We see that the bootstrap bias estimate differs from the Jackknife bias estimate by a factor of $n/(n-1) = 1 + O(1/n)$.
 
 We can show that the variance estimates of the bootstrap and Jackknifediffer by the same factor of $1 + O(1/n)$. Via the Taylor expansion, we have that
 \begin{align*}
@@ -174,7 +198,7 @@ We can show that the variance estimates of the bootstrap and Jackknifediffer by 
 \end{align*}
 We thus see that
 \begin{align*}
-  \Delta_iR^* 
+  \Delta_iR^*
   &= (n-1)\left[\frac{1}{n}\sum_{j=1}^n R^*\left(\frac{\bb{1}-\bb{e}_j}{n-1}\right) - R^*\left(\frac{\bb{1}-\bb{e}_i}{n-1}\right)\right] \\
   &= (n-1)\left[\frac{1}{n}\sum_{j=1}^n\left[R^*(\bb{1}/n) - \frac{n-2}{(n-1)^2} D_jR^*(\bb{1}/n)+ \frac{H_{jj}R^*(\bb{1}/n)}{2(n-1)^2}\right] - R^*(\bb{1}/n) + \frac{n-2}{(n-1)^2} D_iR^*(\bb{1}/n) - \frac{H_{ii}R^*(\bb{1}/n)}{2(n-1)^2}\right] \\
   &= \frac{1}{2n(n-1)}\sum_{j=1}^n H_{jj}R^*(\bb{1}/n) + \frac{n-2}{n-1}D_iR^*(\bb{1}/n) - \frac{H_{ii}R^*(\bb{1}/n)}{2(n-1)} \\
@@ -183,9 +207,9 @@ We thus see that
 Dividing through by $D_iR^*(\bb{1}/n)$ again yields that $\Delta_iR^*/D_iR^*(\bb{1}/n) = 1 + O(1/n)$, immediately yielding the same factor for the ratio of the variance estimates.
 
 ### Regression models {#reg}
-Perhaps one of the most common uses of statistics is fitting linear regression models. Consider the simple linear model $\bb{Y} = \bb{X}\beta + \varepsilon$ where $\bb{Y} \in \R^n$, $\beta \in \R$, and $\varepsilon \sim N(\bb{0}, \sigma^2\bb{I})$ for unknown residual variance $\sigma^2$. Then we know that the least-squares estimator $\widehat{\beta}$ has variance $\sigma^2(\bb{X}^\top\bb{X})^{-1}$. 
+Perhaps one of the most common uses of statistics is fitting linear regression models. Consider the simple linear model $\bb{Y} = \bb{X}\beta + \varepsilon$ where $\bb{Y} \in \R^n$, $\beta \in \R$, and $\varepsilon \sim N(\bb{0}, \sigma^2\bb{I})$ for unknown residual variance $\sigma^2$. Then we know that the least-squares estimator $\widehat{\beta}$ has variance $\sigma^2(\bb{X}^\top\bb{X})^{-1}$.
 
-We can also obtain an estimate of $\var[\widehat{\beta}]$ via bootstrapping, though there are multiple ways to go about bootstrapping in a regression context. One method is as follows: Given the sample $y_1, \ldots, y_n$, we can construct the residuals $\widehat{\varepsilon}_i = y_i - X_i\widehat{\beta}$. We define $\widehat{F}$ to be the empirical distribution of these residuals. We can then construct bootstrap samples $Y_i^* = X_i\widehat{\beta} + \varepsilon_i^*$ where $\varepsilon_i^* \overset{iid}{\sim} \widehat{F}$. This then lets us construct a bootstrap estimate $\widehat{\beta}^*$ of $\beta$. 
+We can also obtain an estimate of $\var[\widehat{\beta}]$ via bootstrapping, though there are multiple ways to go about bootstrapping in a regression context. One method is as follows: Given the sample $y_1, \ldots, y_n$, we can construct the residuals $\widehat{\varepsilon}_i = y_i - X_i\widehat{\beta}$. We define $\widehat{F}$ to be the empirical distribution of these residuals. We can then construct bootstrap samples $Y_i^* = X_i\widehat{\beta} + \varepsilon_i^*$ where $\varepsilon_i^* \overset{iid}{\sim} \widehat{F}$. This then lets us construct a bootstrap estimate $\widehat{\beta}^*$ of $\beta$.
 ```{r}
 set.seed(0)
 
@@ -197,13 +221,13 @@ ns <- 2:1000
 for(n in ns){
   X <- matrix(rnorm(n), nrow=n)
   y <- X * beta + rnorm(n, sd=sigma)
-  
+
   betahat <- solve(t(X)%*%X)%*%t(X)%*%y
-  
+
   true_variance = sigma^2 * solve(t(X)%*%X)
-  
+
   eps_hat <- y - X%*%betahat
-  
+
   N <- 1000
   bootstrap_betas <- c()
   for(i in 1:N){
@@ -232,13 +256,13 @@ ns <- 2:100
 for(n in ns){
   X <- matrix(rnorm(n), nrow=n)
   y <- X * beta + rnorm(n, sd=sigma)
-  
+
   betahat <- solve(t(X)%*%X)%*%t(X)%*%y
-  
+
   true_variance = sigma^2 * solve(t(X)%*%X)
-  
+
   eps_hat <- y - X%*%betahat
-  
+
   N <- 1000
   bootstrap_betas <- c()
   for(i in 1:N){
@@ -254,7 +278,7 @@ plot(ns, variance_diff, xlab="n", ylab="Relative Error", main="Relative Error in
 quantile(variance_diff, 0.5)
 mean(variance_diff)
 ```
-This method is also unbiased for the true variance, but is also much less variable. Though it also can vary wildly for very small $n$, even a small sample size of about $10$ starts yielding very close results. For this reason, bootstrap "by pairs" is often favored over bootstrap by residuals. 
+This method is also unbiased for the true variance, but is also much less variable. Though it also can vary wildly for very small $n$, even a small sample size of about $10$ starts yielding very close results. For this reason, bootstrap "by pairs" is often favored over bootstrap by residuals.
 
 These two methods also accurately estimate covariances:
 ```{r}
@@ -268,13 +292,13 @@ ns <- 3:1000
 for(n in ns){
   X <- matrix(rnorm(n*2, sd=0.1), nrow=n)
   y <- X %*% beta + rnorm(n, sd=sigma)
-  
+
   betahat <- solve(t(X)%*%X)%*%t(X)%*%y
-  
+
   true_covariance = sigma^2 * solve(t(X)%*%X)[1, 2]
-  
+
   eps_hat <- y - X%*%betahat
-  
+
   N <- 1000
   bootstrap_betas <- c()
   for(i in 1:N){
@@ -296,13 +320,13 @@ ns <- 10:1000
 for(n in ns){
   X <- matrix(rnorm(n*2, sd=0.1), nrow=n)
   y <- X %*% beta + rnorm(n, sd=sigma)
-  
+
   betahat <- solve(t(X)%*%X)%*%t(X)%*%y
-  
+
   true_covariance = sigma^2 * solve(t(X)%*%X)[1, 2]
-  
+
   eps_hat <- y - X%*%betahat
-  
+
   N <- 1000
   bootstrap_betas <- c()
   for(i in 1:N){
@@ -315,7 +339,7 @@ for(n in ns){
 }
 plot(ns, cov_diff, xlab="n", ylab="Relative Error", main="Relative Error in Covariance Estimate\n vs Sample Size")
 ```
-Both bootstrapping by residuals and bootstrapping by pairs have some issues estimating covariances regardless of the sample size; the outliers in bootstrapping by pairs tend to be smaller in magnitude, however. In general though, these covariance estimates are once again nearly unbiased, demonstrating that bootstrap estimates of variances is still valid for vector parameters $\beta$. For simplicity, we will focus on scalar parameters $\beta$ for the rest of the post. 
+Both bootstrapping by residuals and bootstrapping by pairs have some issues estimating covariances regardless of the sample size; the outliers in bootstrapping by pairs tend to be smaller in magnitude, however. In general though, these covariance estimates are once again nearly unbiased, demonstrating that bootstrap estimates of variances is still valid for vector parameters $\beta$. For simplicity, we will focus on scalar parameters $\beta$ for the rest of the post.
 
 One advantage of bootstrap is clear: If the distribution of the residual variance is unknown, the nonparametric bootstrap will still allow us to obtain estimates for the variance of $\widehat{\beta}$.
 
@@ -327,24 +351,24 @@ ns <- (1:50)*10
 rel_errors <- c()
 for(n in ns){
   beta <- 5
-  
+
   N <- 1000
   betahats <- c()
   for(i in 1:N){
     X <- matrix(rnorm(n, mean=100, sd=10), nrow=n)
     y <- X * beta + rnorm(n, sd=X^1.5)
-    
+
     betahats <- c(betahats, solve(t(X)%*%X)%*%t(X)%*%y)
   }
-  
+
   true_variance <- var(betahats)
-  
+
   X <- matrix(rnorm(n, mean=100, sd=10), nrow=n)
   y <- X * beta + rnorm(n, sd=X^1.5)
   betahat <- solve(t(X)%*%X)%*%t(X)%*%y
-  
+
   eps_hat = y - X%*%betahat
-  
+
   bootstrap_betas <- c()
   for(i in 1:N){
     y_boot <- X%*%betahat + sample(eps_hat, 1)
@@ -362,22 +386,22 @@ ns <- 10:200
 rel_errors <- c()
 for(n in ns){
   beta <- 5
-  
+
   N <- 5000
   betahats <- c()
   for(i in 1:N){
     X <- matrix(rnorm(n, mean=100, sd=10), nrow=n)
     y <- X * beta + rnorm(n, sd=X^1.5)
-    
+
     betahats <- c(betahats, solve(t(X)%*%X)%*%t(X)%*%y)
   }
-  
+
   true_variance <- var(betahats)
-  
+
   X <- matrix(rnorm(n, mean=100, sd=10), nrow=n)
   y <- X * beta + rnorm(n, sd=X^1.5)
   betahat <- solve(t(X)%*%X)%*%t(X)%*%y
-  
+
   bootstrap_betas <- c()
   for(i in 1:N){
     boot <- sample(1:n, n, replace=TRUE)
@@ -389,7 +413,7 @@ for(n in ns){
 }
 plot(ns, rel_errors, xlab="n", ylab="Relative Error", main="Relative Error vs Sample Size")
 ```
-This method seems to underestimate the variance, and seems to perform poorly with small sample sizes (unlike in the homoskedastic case). However, it fairly quickly converges to the true variance as the sample size increases; a sample size of about $75$ seems to be more than sufficient in this case. This demonstrates the power of bootstrap by pairs: A robustness to heteroskedasticity that allows for valid variance estimation for large samples. 
+This method seems to underestimate the variance, and seems to perform poorly with small sample sizes (unlike in the homoskedastic case). However, it fairly quickly converges to the true variance as the sample size increases; a sample size of about $75$ seems to be more than sufficient in this case. This demonstrates the power of bootstrap by pairs: A robustness to heteroskedasticity that allows for valid variance estimation for large samples.
 
 We can also examine the effect of a skewed distribution of the residuals:
 ```{r}
@@ -400,24 +424,24 @@ ns <- (1:50)*10
 rel_errors <- c()
 for(n in ns){
   beta <- 5
-  
+
   N <- 1000
   betahats <- c()
   for(i in 1:N){
     X <- matrix(rnorm(n, mean=100, sd=10), nrow=n)
     y <- X * beta + (rchisq(n, df=chisq_df) - chisq_df)
-    
+
     betahats <- c(betahats, solve(t(X)%*%X)%*%t(X)%*%y)
   }
-  
+
   true_variance <- var(betahats)
-  
+
   X <- matrix(rnorm(n, mean=100, sd=10), nrow=n)
   y <- X * beta + (rchisq(n, df=chisq_df) - chisq_df)
   betahat <- solve(t(X)%*%X)%*%t(X)%*%y
-  
+
   eps_hat = y - X%*%betahat
-  
+
   bootstrap_betas <- c()
   for(i in 1:N){
     y_boot <- X%*%betahat + sample(eps_hat, 1)
@@ -436,22 +460,22 @@ chisq_df <- 5
 rel_errors <- c()
 for(n in ns){
   beta <- 5
-  
+
   N <- 5000
   betahats <- c()
   for(i in 1:N){
     X <- matrix(rnorm(n, mean=100, sd=10), nrow=n)
     y <- X * beta + (rchisq(n, df=chisq_df) - chisq_df)
-    
+
     betahats <- c(betahats, solve(t(X)%*%X)%*%t(X)%*%y)
   }
-  
+
   true_variance <- var(betahats)
-  
+
   X <- matrix(rnorm(n, mean=100, sd=10), nrow=n)
   y <- X * beta + (rchisq(n, df=chisq_df) - chisq_df)
   betahat <- solve(t(X)%*%X)%*%t(X)%*%y
-  
+
   bootstrap_betas <- c()
   for(i in 1:N){
     boot <- sample(1:n, n, replace=TRUE)
@@ -474,24 +498,24 @@ ns <- (1:50)*10
 rel_errors <- c()
 for(n in ns){
   beta <- 5
-  
+
   N <- 1000
   betahats <- c()
   for(i in 1:N){
     X <- matrix(rnorm(n, mean=100, sd=10), nrow=n)
     y <- X * beta + rt(n, df=t_df)
-    
+
     betahats <- c(betahats, solve(t(X)%*%X)%*%t(X)%*%y)
   }
-  
+
   true_variance <- var(betahats)
-  
+
   X <- matrix(rnorm(n, mean=100, sd=10), nrow=n)
   y <- X * beta + rt(n, df=t_df)
   betahat <- solve(t(X)%*%X)%*%t(X)%*%y
-  
+
   eps_hat = y - X%*%betahat
-  
+
   bootstrap_betas <- c()
   for(i in 1:N){
     y_boot <- X%*%betahat + sample(eps_hat, 1)
@@ -510,22 +534,22 @@ t_df <- 3
 rel_errors <- c()
 for(n in ns){
   beta <- 5
-  
+
   N <- 5000
   betahats <- c()
   for(i in 1:N){
     X <- matrix(rnorm(n, mean=100, sd=10), nrow=n)
     y <- X * beta + rt(n, df=t_df)
-    
+
     betahats <- c(betahats, solve(t(X)%*%X)%*%t(X)%*%y)
   }
-  
+
   true_variance <- var(betahats)
-  
+
   X <- matrix(rnorm(n, mean=100, sd=10), nrow=n)
   y <- X * beta + rt(n, df=t_df)
   betahat <- solve(t(X)%*%X)%*%t(X)%*%y
-  
+
   bootstrap_betas <- c()
   for(i in 1:N){
     boot <- sample(1:n, n, replace=TRUE)
@@ -537,7 +561,7 @@ for(n in ns){
 }
 plot(ns, rel_errors, xlab="n", ylab="Relative Error", main="Relative Error vs Sample Size")
 ```
-Even with a symmetric distribution, the heavy tails of a $t$-distribution with $3$ degrees of freedom cause problems for bootstrapping by residuals. 
+Even with a symmetric distribution, the heavy tails of a $t$-distribution with $3$ degrees of freedom cause problems for bootstrapping by residuals.
 
 To illustrate this technique on a real dataset, we consider the hourly wage vs education data from Farber's 1976 Current Population Survey.
 ```{r}
@@ -561,7 +585,7 @@ plot(fitted(fit), resid(fit))
 qqnorm(resid(fit))
 qqline(resid(fit))
 ```
-We see with the dataset of incomes vs savings can be modelled with a quadratic fit. However, the data is clearly heavily heteroskedastic, and the typical $t$ confidence intervals for the linear and quadratic covariates would not be valid. We thus perform bootstrapping on pairs: 
+We see with the dataset of incomes vs savings can be modelled with a quadratic fit. However, the data is clearly heavily heteroskedastic, and the typical $t$ confidence intervals for the linear and quadratic covariates would not be valid. We thus perform bootstrapping on pairs:
 
 ```{r}
 set.seed(0)
@@ -587,8 +611,8 @@ confint(lm(y ~ poly(X,2)))[2:3,]
 quantile(bootstrap_linear_betas, c(0.025, 0.975))
 quantile(bootstrap_quadratic_betas, c(0.025, 0.975))
 ```
-We see that bootstrapping actually yielded a slightly wider interval for the linear component and a slightly smaller confidence interval for the quadratic component. 
-
+We see that bootstrapping actually yielded a slightly wider interval for the linear component and a slightly smaller confidence interval for the quadratic component.
+ 
 ## Section II: Theory {#sec2}
 <!-- we will use this section sort of as an appendix. Put all proofs here with a link and then reference them from the summary-->
 
@@ -599,4 +623,3 @@ We see that bootstrapping actually yielded a slightly wider interval for the lin
 ### Example 1 {#ex1}
 
 ### Example 2 {#ex2}
-
