@@ -1,6 +1,6 @@
 ---
 title: "ST793 Final Project"
-author: "Emmett Kendall, Neil Dey"
+author: 
 date: "11/18/2021"
 header-includes:
   - \usepackage{bm}
@@ -69,6 +69,7 @@ Now, we can show the following probability statement <!--- finish --->
 \begin{align*}
 P(R^* = x_{(l)} - x_{(m)}) &= P(X_{(m)}^* - x_{(m)} = x_{(l)} - x_{(m)}) \\
 &= P(X_{(m)}^* = x_{(l)})\\
+&= P(X_{(m)}^* > x_{(l)}) - P(X_{(m)}^* > x_{(l+1)})\\
 &= P\left(Bin\left(n,\frac{l-1}{n}\right) \leq m-1\right) - P\left(Bin\left(n,\frac{l}{n}\right) \leq m-1\right)
 \end{align*}
 
@@ -109,16 +110,17 @@ where $I_i$ is a random index chosen indepedently from $\{1,2,...,n\}$ and $Z_i$
 $$R(\bb{X}, F) = \frac{|t(\bb{X}) - \theta(F)|}{\sigma(F)} \implies R^* = \frac{|t(\bb{X^*}) - \theta(\hat F)|}{\hat\sigma}$$
 You may be asking why the change? This is because we want to gain more numerical stability in our calculation. We are still studying the true median $\theta(F)$, however, now the bootstrapped quantity is the absolute error relative to population standard deviation $\sigma(F)$ which lets $R^*$ be invariant to any scaled changes in $\hat \sigma$ estimating the true standard deviation.
 
-How do we actually test if this new bootstrap quantity is worth studying? We will do Monte Carlo simulations to test this in the following example. Let $X_i \overset{iid}{\sim} N(0,1)$ for $i = 1,...,13$. Then, we know that 
-$$E_F(R) = 0.95$$
-We will compare the results from the first two unsmooth bootstrap examples for the simple and symmetric cases with the smooth bootstrap method that scales with the standard devation. We will apply Monte Carlo simulations with the smoothed bootstrap method with a resampled size of $N=50$. We will let $Z_i\sim U\left(\frac{-d}{2}, \frac{d}{2}\right)$ for $d \in \{0,0.25,0.5,1\}$. 
-The results of the simulation indicate that with a bootstrapped sample size of $N=50$ and 10 trials, the simplest boostrap procedure results in an estimated mean of 1.21
-with a standard deviation of 0.54, the symmetric method results in a mean of 0.26 with a standard deviation of 0.17, and the other smooth bootstrap methods had a mean that was consistently about 1.15 with a standard deviation of 0.23. Therefore, even with the strong symmetry assumption for the second bootstrap procedure, it still produces results that rival those of the more numerically stable procedures which may take a little more computation and thought to produce. The authors argue that in settings where the simulated distributions are not as well behaved, the smoothing procedure may be better, yet that is still unclear and more research needs to be done to confirm that hypothesis. (The code and results for the first procedure are given below.)
+How do we actually test if this new bootstrap quantity is worth studying? We will do Monte Carlo simulations to test this in the following example. This example follows a similar structure to the one in the paper, however, we believe we have made the motivation for this method a little clearer in our personal example. Let $X_i \overset{iid}{\sim} N(0,1)$ for $i = 1,...,13$. Then, we know that 
+$$E_F(R) = E_F(X_{(m)} - 0) = 0$$
+We will compare the results from the first two unsmooth bootstrap examples for the simple and symmetric cases with the smooth bootstrap method that scales with the standard devation. We begin with the two unsmooth bootstrap examples with the goal being that $E(R^*)$ is close to 0 with some small standard deviation.
 ```{r}
 set.seed(100)
 n = 13
 
-est_exp = matrix(nrow=10,ncol=2)
+# 10 Trials of sample size 13 (each row a trial)
+X_orig = matrix(rnorm(n*10), nrow = 10)
+
+# -----------------------------------------------------------------
 
 # Probability Mass 3.6 (m_3_6)
 m_3_6 = rep(-1,13)
@@ -127,31 +129,88 @@ for(i in 0:12) {
 }
 m_3_6 = round(m_3_6, 4)
 
+# Method 3.6
+X = t(apply(X_orig, 1, sort))
+med_X = X[,7] # the column of medians
+X = X - med_X 
+exp_val = X %*% as.matrix(m_3_6); print(round(exp_val, digits = 3))
+print(paste0("Average: ", round(mean(exp_val), digits = 3)))
+print(paste0("SD: ", round(sd(exp_val), digits = 3)))
 
+# -----------------------------------------------------------------
 
-for (j in 1:10) {
-  
-  X = matrix(rnorm(n*10), nrow = 10)
-  
-  # Method 3.6
-  # Fix the Trial j sample and then bootstrap sample 50 times
-  temp = rep(0,50)
-  for(k in 1:50) {
-    ind = sort(sample(1:13, replace = T, prob = rep(1/13,13)))
-    x = sort(X[j,ind])
-    x_m = median(x) 
-    for(l in 1:13) {
-      temp[k] = temp[k] + (x[l] - x_m)^2 * m_3_6[l]
-    }
+# Probability Mass 3.10 (m_3_10)
+m_3_10 = rep(1,25)
+for(i in 0:24) {
+  m_3_10[i+1] = pbinom(6, 13, (i)/25) - pbinom(6,13, (i+1)/25)
+}
+m_3_10[25] = 0
+m_3_10 = round(m_3_10, 4)
+
+# Setting up the symmetric form
+X_3_10 = matrix(nrow = 10, ncol = 25)
+small_X = t(apply(X_orig, 1, sort))[,-7]
+X_3_10[,1:12] = small_X
+X_3_10[,13] = med_X
+X_3_10[,14:25] = 2*med_X - small_X
+X_3_10 = t(apply(X_3_10, 1, sort))
+
+X_3_10 = X_3_10 - med_X
+exp_val = X_3_10 %*% as.matrix(m_3_10); print(exp_val)
+print(paste0("Average: ", round(mean(exp_val), digits = 3)))
+print(paste0("SD: ", round(sd(exp_val), digits = 3)))
+```
+We note that for the 10 trials, we get $E(R^*) \approx 0$ with a very small standard deviation. This is reassuring of the theory described above; however, it is worth noting that no bootstrapped samples were needed in order to get those expectations. We derived the probability distributions by hand and used theory to make those calculations work. Thus, in the most simplest of cases, we already get results close to the truth. However, the researchers point out that for the example we are using, the normal distribution is smooth, well behaved, symmetric, and centered at 0. All of these properties would allow for these two simple, unsmoothed bootstrap approaches to do well. We especially see this to be true in the symmetric method because we see that all 10 trials resulted in expected values that were basically 0 and the standard deviation rounded to 0. Thus, correctly assuming symmetry drastically improved the results.
+
+Next we will explore the Smoothed Bootstrap approach described right before this example for the same data as before. The authors argue that in settings where the simulated distributions are not as well behaved, the smoothing procedure may be better, yet that is still unclear and more research needs to be done to confirm that hypothesis. Regardless, we will still let $X_i \overset{iid}{\sim} N(0,1)$ and we will let $Z_i \sim U\left(\frac{-d}{2}, \frac{d}{2}\right)$ for $d \in \{0,0.25,0.5,1\}$. We will use $N=50$ Monte Carlo replications for the 10 trials above. Addionally let $c = (1 + \sigma_Z^2)^{-1/2}$. With this setup, we get the following results
+```{r}
+
+set.seed(100)
+n = 13
+
+# 10 Trials of sample size 13 (each row a trial)
+X_orig = matrix(rnorm(n*10), nrow = 10)
+
+# Smoothed Bootstrap
+
+#One trial so far
+# I need 50 replicates of 13 data points
+bootSample <- function(x, d, s_z) {
+  x_star = rep(NA, length(x))
+  c = 1/sqrt(1 + s_z) # value of c suggested in paper
+  for(i in 1:length(x)) {
+    z_i = runif(1, -d/2, d/2)
+    x_star[i] = mean(x) + c * (sample(x,1) - mean(x) + sd(x) * z_i)
   }
-  est_exp[j,1] = mean(temp)
+  return(x_star)
+}
+
+d = c(0,0.25,0.5,1) # values for d
+s_z = d^2 / 12 # variance of a Uniform(-d/2, d/2)
+
+mean_estimates = matrix(nrow = 10, ncol = 4)
+for (j in 1:10) { # number of trials
+  x = X_orig[j,]
+  med = median(x)
+  sd = sd(x)
+  for(k in 1:4) { # length of d 
+    r_vec = rep(1,50)
+    for (i in 1:50) { # N = 50 MC simulations
+      temp = bootSample(x, d[k], s_z[k])
+      r_vec[i] = abs(median(temp) - med) / sd
+    }
+    mean_estimates[j,k] = mean(r_vec)
+  }
   
 }
 
-print("Trails 1-10"); round(est_exp[,1], digits = 2)
-print(paste0("Average: ", round(mean(est_exp[,1]), digits = 2)))
-print(paste0("SD: ", round(sd(est_exp[,1]), digits = 2)))
+colnames(mean_estimates) = c("d=0", "d=0.25", "d=0.5", "d=1")
+print(round(mean_estimates, digits = 2))
+print("Average:"); print(round(colMeans(mean_estimates), digits = 2))
+print("Standard Deviation:"); print(round(apply(mean_estimates, 2, sd), digits = 2))
 ```
+
+Therefore, despite the smoothing condition, the estimates for the expected value are further from the truth than the first two examples, while the standard deviations are still small. Again, the researchers claim that if the distribution of $R$ itself was perhaps less smooth than was simulated in this exercise, then it would perform better; however, this paper provides no strict evidence to support that.
 
 ### Relationship with the jackknife {#relJack}
 We now examine the approximate bias and variance of our bootstrap estimators. We show that these approximations agree exactly with the approximations given by the \textit{infinitesimal Jackknife} method, and we also show agreement with the ordinary Jackknife up to a factor of $1 + O(1/n)$.
@@ -704,3 +763,6 @@ We see that bootstrapping actually yielded a slightly wider interval for the lin
 <!--### Example 1 {#ex1}-->
 
 <!--### Example 2 {#ex2} -->
+
+
+
