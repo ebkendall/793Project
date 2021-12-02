@@ -7,6 +7,7 @@ header-includes:
 output:
   html_document:
     toc: true
+    toc_depth: 4
 ---
 \newcommand{\bb}[1]{\boldsymbol{#1}}
 \newcommand{\setst}{\,:\,}
@@ -209,7 +210,7 @@ print("Standard Deviation:"); print(round(apply(mean_estimates, 2, sd), digits =
 Therefore, despite the smoothing condition, the estimates for the expected value are further from the truth than the first two examples, while the standard deviations are still small. Again, the researchers claim that if the distribution of $R$ itself was perhaps less smooth than was simulated in this exercise, then it would perform better; however, this paper provides no strict evidence to support that.
 
 ## Relationship with the jackknife {#relJack}
-We now examine the approximate bias and variance of our bootstrap estimators. We show that these approximations agree exactly with the approximations given by the \textit{infinitesimal Jackknife} method, and we also show agreement with the ordinary Jackknife up to a factor of $1 + O(1/n)$.
+We now examine the approximate bias and variance of our bootstrap estimators. We show that these approximations agree exactly with the approximations given by the _infinitesimal Jackknife_ method, and we also show agreement with the ordinary Jackknife up to a factor of $1 + O(1/n)$.
 
 In a one-sample situation, define $N_i^* = |\{j \,:\, X_j^* = X_i\}|$, the number of bootstrap samples that match the $i$th observation.
 Note that $\bb{N}^* \sim \operatorname{Multinom}(n; \bb{1}/n)$ so that $\E[\bb{N}^*] = \bb{1}$ and $\var[\bb{N}^*] = \bb{I} - \bb{1}^\top\bb{1}/n$.
@@ -220,7 +221,7 @@ Note, then, that
 \end{equation}
 
 Let us suppose that the random variable of interest, $R(\bb{X}, F)$, is invariant to with respect to the ordering of $X_1, \ldots, X_n$.
-That is, we have \textit{exchangability} of the observations.
+That is, we have _exchangability_ of the observations.
 With this assumption, note that we can recover both $\bb{X}$ (up to permutation) and $\widehat{F}$ when we are given $\bb{P}^*$.
 Hence, it makes sense to consider the random variable of interest as simply a function of $\bb{P}^*$:
 \begin{equation*}
@@ -346,7 +347,7 @@ Dividing through by $D_iR^*(\bb{1}/n)$ again yields that $\Delta_iR^*/D_iR^*(\bb
 ## Regression models (Example 2) {#reg}
 Perhaps one of the most common uses of statistics is fitting linear regression models. Consider the simple linear model $\bb{Y} = \bb{X}\beta + \varepsilon$ where $\bb{Y} \in \R^n$, $\beta \in \R$, and $\varepsilon \sim \operatorname{N}(\bb{0}, \sigma^2\bb{I})$ for unknown residual variance $\sigma^2$. Then we know that the least-squares estimator $\widehat{\beta}$ has variance $\sigma^2(\bb{X}^\top\bb{X})^{-1}$.
 
-### Case 1
+### Introduction: Bootstrapping by Residuals and by Pairs
 We can also obtain an estimate of $\var[\widehat{\beta}]$ via bootstrapping, though there are multiple ways to go about bootstrapping in a regression context. One method is as follows: Given the sample $y_1, \ldots, y_n$, we can construct the residuals $\widehat{\varepsilon}_i = y_i - X_i\widehat{\beta}$. We define $\widehat{F}$ to be the empirical distribution of these residuals. We can then construct bootstrap samples $Y_i^* = X_i\widehat{\beta} + \varepsilon_i^*$ where $\varepsilon_i^* \overset{iid}{\sim} \widehat{F}$. This then lets us construct a bootstrap estimate $\widehat{\beta}^*$ of $\beta$.
 ```{r}
 set.seed(0)
@@ -482,7 +483,10 @@ Both bootstrapping by residuals and bootstrapping by pairs have some issues esti
 
 One advantage of bootstrap is clear: If the distribution of the residual variance is unknown, the nonparametric bootstrap will still allow us to obtain estimates for the variance of $\widehat{\beta}$.
 
-### Case 2
+### Estimating Variances in Non-standard Regression Models
+We now consider several situations where it is more difficult to analytically compute the true variance of the parameter, thus making computational techniques such as the bootstrap a more useful tool.
+
+#### Heteroskedasticity
 We can repeat the above simulations, but this time with heteroskedasticity, in which the residual variance depends on the data $\bb{X}$. In particular, we consider the case where the residuals $\varepsilon_i$ satisfy $\var[\varepsilon_i] = X_i^3$.
 ```{r}
 set.seed(0)
@@ -557,7 +561,7 @@ plot(ns, rel_errors, xlab="n", ylab="Relative Error", main="Relative Error vs Sa
 
 This method seems to underestimate the variance, and seems to perform poorly with small sample sizes (unlike in the homoskedastic case). However, it fairly quickly converges to the true variance as the sample size increases; a sample size of about $75$ seems to be more than sufficient in this case. This demonstrates the power of bootstrap by pairs: A robustness to heteroskedasticity that allows for valid variance estimation for large samples.
 
-### Case 3
+#### Asymmetric Distribution of Residuals
 We can also examine the effect of a skewed distribution of the residuals:
 ```{r}
 set.seed(0)
@@ -633,7 +637,7 @@ plot(ns, rel_errors, xlab="n", ylab="Relative Error", main="Relative Error vs Sa
 
 Once again, bootstrapping by residuals performs poorly compared to bootstrapping by pairs.
 
-### Case 4
+#### Heavy-Tailed Distribution of Residuals
 Finally, we examine the effects of a heavy-tailed distribution for the residuals:
 ```{r}
 set.seed(0)
