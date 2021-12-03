@@ -23,44 +23,46 @@ knitr::opts_chunk$set(echo = TRUE)
 ***
 
 ## Introduction to Bootstrap Methods
-The ultimate goal of the methods outlined in bootstrap are to take observations, $\bb{X}$, from an unknown distribution, $F$, and understand the sampling distribution of a chosen random quantity, $R(\bb{X}, F)$, of interest using only the observed data you have available. In the context of this paper, there existed a method called "Jackknife" which mainly worked for two forms of the $R(\bb{X}, F)$ that is
+The ultimate goal of bootstrap methods is to take observations, $\bb{X}$, from an unknown distribution, $F$, and understand the sampling distribution of a chosen random quantity of interest, $R(\bb{X}, F)$, using only the available observed data. In the context of this paper (Efron 1977), there existed a method called "jackknife" which mainly worked for two forms of $R(\bb{X}, F)$, namely
 \begin{align*}
 R(\bb{X}, F) &= t(\bb{X}) - \theta(F)\\
 R(\bb{X}, F) &= \frac{t(\bb{X}) - \widehat{\operatorname{Bias}}(t) - \theta(F)}{\sqrt{\widehat{\var}(t)}}
 \end{align*}
-where $t(\bb{X})$ estimates $\theta(F)$. What is worth noting is that jackknife approximates the distribution of $R$ by sampling $n-1$ times **without** replacement. Bootstrap is then introduced and follows the general framework below
+where $t(\bb{X})$ estimates $\theta(F)$. It is worth noting that the jackknife approximates the distribution of $R$ by resampling $n-1$ times from $\bb{X}$ **without** replacement. To extend to more general $R$, the paper then introduces bootstrapping, following the general framework below:
 
-1. Given the existing data $\bb{X} = (x_1,...,x_n)$, assign each data point probability $1/n$ such that selecting an observation from the sample has equal probability.
-2. Sample from $\bb{X}$ **with** replacement to get $\bb{X}^*$  which has data points $\{x_1^*, ..., x_n^*\} \subseteq \bb{X}$. Do this multiple times since each $\bb{X_i^*}$ will be from the sampling distribution $\widehat{F}$.
-3. Now we get the _bootstrap distribution_ which is the "empirical distribution" for $R(\bb{X},F)$, namely $R^* = R(\bb{X^*}, \widehat F)$.
+1. Given the existing data $\bb{X} = (x_1,...,x_n)$, assign each data point probability $1/n$ such that selecting an observation from the sample has equal probability. We denote this emperical sampling distribution $\widehat{F}$.
+2. Sample from \widehat{F} (or equivalently, from $\bb{X}$ **with** replacement) to get $\bb{X}^* = (x_1^*, ..., x_n^*)$, where each $x_i^* \in \bb{X}$.
+3. Performing the resampling of step 2 multiple times to yield several $\bb{X_i^*}$ from the sampling distribution $\widehat{F}$. By computing $R^*_i = R(\bb{X^*_i}, \widehat F)$ from our bootstrap samples, we thus get the _bootstrap distribution_, which is a sort of "empirical distribution" for the quantity of interest $R(\bb{X},F)$.
 
-The whole motivation is that if the resampled distribution $\widehat F$ is remotely close to the true $F$, then the estimator for $R$'s distribution will be close to the truth. A large factor in the success of this method, however, is the functional form of $R$. Additionally, while it may be relatively straightforward to calculate the expected value and variance of $R^*$, actually deriving its distribution proves to be difficult. In this paper, we will dive into the three main derivation techniques for uncovering this distribution. They are
+The whole motivation is that if the empirical distribution $\widehat F$ is remotely close to the true $F$, then the estimator for $R$'s distribution will be close to the truth. A large factor in the success of this method, however, is the functional form of $R$. Additionally, while it may be relatively straightforward to calculate the expected value and variance of $R^*$, actually deriving its distribution proves to be difficult. In this paper, we will dive into the three main derivation techniques for uncovering this distribution. They are
 
 1. Pure theoretical derivations and calculations
 2. Monte Carlo simulations (get an empirical distribution for $R^*$)
 3. Taylor series approximations.
 
-## Estimating the median {#med}
+## Estimating the median (Example 1) {#med}
+
+### A Direct Theoretical Calculation
 Consider a simple illustration. Suppose, for the unknown distribution $F$, we are interested in uncovering the median. Call $\theta(F)$ the true median, and let $t(\bb{X}) = X_{(m)}$ be the estimator, i.e. the sample median. For ease, assume the sample size, $n$, is odd (so that $n=2m+1$ exactly). Define
 $$R(\bb{X}, F) = X_{(m)} - \theta(F).$$
 
 From the sample $\bb{X}$, we can take a bootstrap sample (sampling from the observed $\bb{x}$ with replacement) $\bb{X^*} = \bb{x^*}$ and count the number of times each original observation $x_i$ occurs in the bootstrap sample. Doing this will provide us with a multinomial distribution where we define $N_i^*$ as the number of times $X_i^* = x_i$ in the bootstrap sample. It is worth noting that $N_i^*$ need not be strictly greater than 0 since it is a possibility to not observe an $x_i$ from the original sample. Thus, we can apply this notation now to the ordered sample, namely
-$$x_{(1)} \leq ... \leq x_{(n)} \implies N_{(1)}^*,..., N_{(n)}^*$$
+$$x_{(1)} \leq ... \leq x_{(n)} \implies N_{(1)}^*,..., N_{(n)}^*.$$
 
-Now, we can define the bootstrap $R$ as
-$$R^* = R(\bb{X^*}, \widehat F) = X_{(m)}^* - x_{(m)}$$
-where $x_{(m)}$ is the observed median. Next, we investigate the probabilities associated with $R^*$ as it is important in getting the random variable's expected value and other summaries. First, let $l \in \{1, 2, \ldots, n-1\}$. Then
+Now, we can define the bootstrap $R^*$ as
+$$R^* = R(\bb{X^*}, \widehat F) = X_{(m)}^* - x_{(m)},$$
+where $x_{(m)}$ is the observed median. Next, we investigate the probabilities associated with $R^*$, as they are important in getting the random variable's expected value and other summaries. First, let $l \in \{1, 2, \ldots, n-1\}$. Then
 \begin{align*}
-\Pr(X^*_{(m)} > x_{(l)}) &= \Pr(N_{(1)}^* + ...+ N_{(l)}^* < m)
+\Pr(X^*_{(m)} > x_{(l)}) &= \Pr(N_{(1)}^* + ...+ N_{(l)}^* < m).
 \end{align*}
-Since each $N_{(i)}^*$ can take a value between 0 and $n$ with equal probability and each $N_{(i)}^*$ is assumed independent, then we know that $\sum_{i=1}^l N_{(i)}^* \sim \operatorname{Binom}\left(n, \frac{l}{n}\right)$. Therefore, call $W^* = \sum_{i=1}^l N_{(i)}^*$ and note that since we are in a discrete setting, we can rewrite the probability statement as
+Since each $N_{(i)}^*$ can take a value between 0 and $n$ with equal probability and each $N_{(i)}^*$ is assumed independent, we know that $\sum_{i=1}^l N_{(i)}^* \sim \operatorname{Binom}\left(n, \frac{l}{n}\right)$. Therefore, call $W^* = \sum_{i=1}^l N_{(i)}^*$ and note that since we are in a discrete setting, we can rewrite the probability statement as
 \begin{align*}
 \Pr(N_{(1)}^* + ...+ N_{(l)}^* < m) &= \Pr(W^* \leq m-1)\\
-&= \sum_{i=0}^{m-1} \binom{n}{l} \left(\frac{l}{n}\right)^{i}\left(1 - \frac{l}{n}\right)^{n-i}
+&= \sum_{i=0}^{m-1} \binom{n}{l} \left(\frac{l}{n}\right)^{i}\left(1 - \frac{l}{n}\right)^{n-i}.
 \end{align*}
 If this is not immediately clear, the goal is to completely describe the event where the bootstrap median $X_{(m)}^*$ is greater than some chosen sample observation $x_{(l)}$. While the actual numeric value is important in determining the order of the observations, we can think of putting the original $n$ observations on a numberline and then assigning them an index number from 1 to $n$. The median is just the index right in the middle with $\left\lfloor\frac{n}{2}\right\rfloor$ indeces to the left and right of it. Since bootstrap samples with replacement $n$ times from the original ordered data sample, we can describe the event of interest by counting the total number of times we observe the first $l$ indices and then checking if it is less than or equal to $m-1 = \left\lfloor\frac{n}{2}\right\rfloor$. If it is true, then we know $X^*_{(m)} > x_{(l)}$.
 
-Now, we can show the following probability statement
+We can now show the following probability statement:
 \begin{align*}
 \Pr(R^* = x_{(l)} - x_{(m)}) &= \Pr(X_{(m)}^* - x_{(m)} = x_{(l)} - x_{(m)}) \\
 &= \Pr(X_{(m)}^* = x_{(l)})\\
@@ -77,7 +79,7 @@ for(i in 1:6) {
 }
 print(round(m, digits=4))
 ```
-This example can be abstracted to larger, odd-numbered sample sizes which means we can estimate expected squared error loss of the sample median given by the equation
+This example can be abstracted to larger, odd-numbered sample sizes, which means we can estimate expected squared error loss of the sample median given by the equation
 $$\E_F[R^2] = \E_F[(t(\bb{X}) - \theta(F))^2]$$
 by the following
 $$\E_{\widehat{F}}[R^*]^2 = \sum_{l=1}^{13} [x_{(l)} - x_{(7)}]^2 \cdot \Pr(R^* = x_{(l)} - x_{(7)})$$
@@ -85,11 +87,11 @@ because we have an estimated discrete probability distribution now. It is worth 
 $$n\E_{\widehat{F}}[{R^*}^2] \to \frac{1}{4}f^2(\theta) \quad \text{ as } \quad n\to \infty$$
 where $f(\theta)$ is the density of $F$ at the median $\theta(F)$.
 
-Next, we will consider an example using a symmetric probability distribution. We will define $\widehat{F}_{\text{SYM}$ by being symmetric about the median $x_{(m)}$ and having the probability mass of $\frac{1}{2n-1}$ for each of the $2n-1$ support value, namely $x_{(1)}, ..., x_{(n)}, 2x_{(m)}-x_{(1)}, ..., 2x_{(m)} - x_{(n)}$. We do this so that all $2n-1$ sample points are symmetric about $x_{(m)}$. Call $z$ the bootstrap sample elements with ordering $z_{(1)} \leq ... \leq z_{(2n-1)}$. Then, using the same derivation of the probability mass function for $R^*$, we have for $l \in \{1, 2, \ldots, 2n-1\}$ that
-$$\Pr_{\widehat{F}}(R^* = z_{(l)} - x_{(m)}) = \Pr\left(\operatorname{Binom}\left(n,\frac{l-1}{2n-1}\right) \leq m-1\right) - \Pr\left(\operatorname{Binom}\left(n,\frac{l}{2n-1}\right) \leq m-1\right)$$
-It is worth noting that we are only considering a sample size of $n$ because the distribution we are sampling from is symmetric, therefore, there exists only $n$ values that we can sample the bootstrap from, but there exists a total of $2n-1$ possible "indices" from which to sample from.
+Next, we will consider an example using a symmetric probability distribution. We will define $\widehat{F}_{\text{SYM}}$ to be symmetric about the median $x_{(m)}$ and with a probability mass of $\frac{1}{2n-1}$ for each of the $2n-1$ support values $x_{(1)}, ..., x_{(n)}, 2x_{(m)}-x_{(1)}, ..., 2x_{(m)} - x_{(n)}$. We do this so that all $2n-1$ sample points are symmetric about $x_{(m)}$. Call $z$ the bootstrap sample elements, with the ordering $z_{(1)} \leq ... \leq z_{(2n-1)}$. Then, using the same derivation of the probability mass function for $R^*$, we have for $l \in \{1, 2, \ldots, 2n-1\}$ that
+$$\Pr_{\widehat{F}}(R^* = z_{(l)} - x_{(m)}) = \Pr\left(\operatorname{Binom}\left(n,\frac{l-1}{2n-1}\right) \leq m-1\right) - \Pr\left(\operatorname{Binom}\left(n,\frac{l}{2n-1}\right) \leq m-1\right).$$
+It is worth noting that we are only considering a sample size of $n$ because the distribution we are sampling from is symmetric; therefore, there exist only $n$ values that we can sample the bootstrap from, but there exists a total of $2n-1$ possible "indices" from which to sample from.
 
-Again, suppose $n=13$, then we can replicate the table as follows
+Again, supposing $n=13$, we can replicate the table as follows:
 ```{r}
 m = matrix(nrow=1,ncol=10)
 for(i in 1:10) {
@@ -99,17 +101,18 @@ w = matrix(data=m, nrow=2,byrow = T)
 print(round(w, digits=4))
 ```
 
-Now, we transition into a different way of doing the bootstrap sampling. Rather than taking random samples from $\bb{X} = (x_1,...,x_n)$, we can take
+
+### A Monte Carlo Approach
+
+Now, we transition into a different way of doing bootstrap sampling to estimate the median. Rather than taking random samples from $\bb{X} = (x_1,...,x_n)$, we can take
 $$X_i^* = \bar x + c[x_{I_i} - \bar x + \widehat\sigma Z_i]$$
-where $I_i$ is a random index chosen indepedently from $\{1,2,...,n\}$ and $Z_i$ is a predetermined random variable with mean 0 and variance denoted by $\sigma_Z^2$. Then, $\bar x, \widehat \sigma,$ and $c$ are chosen such that $\E(X_i^*) = \bar x$ and $\var(X_i^*) = \widehat \sigma^2$. The motivation behind this new sampling technique is to not rely on strict assumptions on the functional form of the distribution. In other words, assuming symmetry (like before) is very strict. Not only does the sampling procedure differ, but the manner to check how reliable this sampling procedure changes. We now switch from investigating squared error loss to absolute error loss with the random variable given by
+where $I_i$ is a random index chosen indepedently from $\{1,2,...,n\}$ and $Z_i$ is a predetermined random variable with mean 0 and variance denoted by $\sigma_Z^2$. Then, $\bar x, \widehat \sigma,$ and $c$ are chosen such that $\E(X_i^*) = \bar x$ and $\var(X_i^*) = \widehat \sigma^2$. The motivation behind this new sampling technique is to not rely on strict assumptions on the functional form of the distribution. In other words, assuming symmetry (like before) is very strict, but this new technique allows us to relax this assumption. Not only does the sampling procedure differ, but the manner to check how reliable this sampling procedure changes as well: We now switch from investigating squared error loss to absolute error loss with the random variable given by
 $$R(\bb{X}, F) = \frac{|t(\bb{X}) - \theta(F)|}{\sigma(F)} \implies R^* = \frac{|t(\bb{X^*}) - \theta(\widehat F)|}{\widehat\sigma}$$
-You may be asking why the change? This is because we want to gain more numerical stability in our calculation. We are still studying the true median $\theta(F)$, however, now the bootstrapped quantity is the absolute error relative to population standard deviation $\sigma(F)$ which lets $R^*$ be invariant to any scaled changes in $\widehat \sigma$ estimating the true standard deviation.
+You may be asking why the change? This is because we want to gain more numerical stability in our calculation. We are still studying the true median $\theta(F)$, but now the bootstrapped quantity is the absolute error relative to population standard deviation $\sigma(F)$, which lets $R^*$ be invariant to any scaled changes in $\widehat \sigma$ estimating the true standard deviation.
 
-### Example 1
-
-How do we actually test if this new bootstrap quantity is worth studying? We will do Monte Carlo simulations to test this in the following example. This example follows a similar structure to the one in the paper, however, we believe we have made the motivation for this method a little clearer in our personal example. Let $X_i \overset{iid}{\sim} N(0,1)$ for $i = 1,...,13$. Then, we know that 
-$$\E_F[R] = \E_F[X_{(m)} - 0] = 0$$
-We will compare the results from the first two unsmooth bootstrap examples for the simple and symmetric cases with the smooth bootstrap method that scales with the standard devation. We begin with the two unsmooth bootstrap examples with the goal being that $E[R^*]$ is close to 0 with some small standard deviation.
+How do we actually test if this new bootstrap quantity is worth studying? We will do Monte Carlo simulations to test this in the following example. This example follows a similar structure to the one in the paper; however, we believe we have made the motivation for this method a little clearer here. Let $X_i \overset{iid}{\sim} N(0,1)$ for $i = 1,...,13$. Then we know that
+$$\E_F[R] = \E_F[X_{(m)} - 0] = 0.$$
+We will compare the results from the first two non-smooth bootstrap examples for the simple and symmetric cases with the smooth bootstrap method that scales with the standard devation. We begin with the two non-smooth bootstrap examples, with the goal that $E[R^*]$ be close to 0 with some small standard deviation.
 ```{r}
 set.seed(100)
 n = 13
@@ -157,9 +160,9 @@ exp_val = X_3_10 %*% as.matrix(m_3_10); print(exp_val)
 print(paste0("Average: ", round(mean(exp_val), digits = 3)))
 print(paste0("SD: ", round(sd(exp_val), digits = 3)))
 ```
-We note that for the 10 trials, we get $\E[R^*] \approx 0$ with a very small standard deviation. This is reassuring of the theory described above; however, it is worth noting that no bootstrapped samples were needed in order to get those expectations. We derived the probability distributions by hand and used theory to make those calculations work. Thus, in the most simplest of cases, we already get results close to the truth. However, the researchers point out that for the example we are using, the normal distribution is smooth, well behaved, symmetric, and centered at 0. All of these properties would allow for these two simple, unsmoothed bootstrap approaches to do well. We especially see this to be true in the symmetric method because we see that all 10 trials resulted in expected values that were basically 0 and the standard deviation rounded to 0. Thus, correctly assuming symmetry drastically improved the results.
+We note that for the 10 trials, we get $\E[R^*] \approx 0$ with a very small standard deviation. This is reassuring given the theory described above; however, it is worth noting that no bootstrapped samples were needed in order to get those expectations: After all, we already derived the probability distributions by hand and used theory to make those calculations work. Thus, in the simplest of cases, we already get results close to the truth. However, the researchers point out that for the example we are using, the normal distribution is smooth, well behaved, symmetric, and centered at 0. All of these properties would allow for these two simple, unsmoothed bootstrap approaches to do well. We especially see this to be true in the symmetric method because we see that all 10 trials resulted in expected values that were basically 0 and the standard deviation rounded to 0. Thus, correctly assuming symmetry drastically improved the results.
 
-Next we will explore the Smoothed Bootstrap approach described right before this example for the same data as before. The authors argue that in settings where the simulated distributions are not as well behaved, the smoothing procedure may be better, yet that is still unclear and more research needs to be done to confirm that hypothesis. Regardless, we will still let $X_i \overset{iid}{\sim} \operatorname{N}(0,1)$ and we will let $Z_i \sim \operatorname{Unif}\left(\frac{-d}{2}, \frac{d}{2}\right)$ for $d \in \{0,0.25,0.5,1\}$. We will use $N=50$ Monte Carlo replications for the 10 trials above. Addionally let $c = (1 + \sigma_Z^2)^{-1/2}$. With this setup, we get the following results
+Next we will explore the Smoothed Bootstrap approach described at the beginning of this section for the same data as before. The authors argue that in settings where the simulated distributions are not as well behaved, the smoothing procedure may be better, yet that is still unclear and more research needs to be done to confirm that hypothesis. Regardless, we will still let $X_i \overset{iid}{\sim} \operatorname{N}(0,1)$ and we will let $Z_i \sim \operatorname{Unif}\left(\frac{-d}{2}, \frac{d}{2}\right)$ for $d \in \{0,0.25,0.5,1\}$. We will use $N=50$ Monte Carlo replications for the 10 trials above. Addionally let $c = (1 + \sigma_Z^2)^{-1/2}$. With this setup, we get the following results:
 ```{r}
 
 set.seed(100)
@@ -209,8 +212,8 @@ print("Standard Deviation:"); print(round(apply(mean_estimates, 2, sd), digits =
 
 Therefore, despite the smoothing condition, the estimates for the expected value are further from the truth than the first two examples, while the standard deviations are still small. Again, the researchers claim that if the distribution of $R$ itself was perhaps less smooth than was simulated in this exercise, then it would perform better; however, this paper provides no strict evidence to support that.
 
-## Relationship with the jackknife {#relJack}
-We now examine the approximate bias and variance of our bootstrap estimators. We show that these approximations agree exactly with the approximations given by the _infinitesimal Jackknife_ method, and we also show agreement with the ordinary Jackknife up to a factor of $1 + O(1/n)$.
+## Relationship With the Jackknife {#relJack}
+We now examine the approximate bias and variance of our bootstrap estimators. We show that these approximations agree exactly with the approximations given by the _infinitesimal jackknife_ method, and we also show agreement with the ordinary jackknife up to a factor of $1 + O(1/n)$.
 
 In a one-sample situation, define $N_i^* = |\{j \,:\, X_j^* = X_i\}|$, the number of bootstrap samples that match the $i$th observation.
 Note that $\bb{N}^* \sim \operatorname{Multinom}(n; \bb{1}/n)$ so that $\E[\bb{N}^*] = \bb{1}$ and $\var[\bb{N}^*] = \bb{I} - \bb{1}^\top\bb{1}/n$.
@@ -222,7 +225,7 @@ Note, then, that
 
 Let us suppose that the random variable of interest, $R(\bb{X}, F)$, is invariant to with respect to the ordering of $X_1, \ldots, X_n$.
 That is, we have _exchangability_ of the observations.
-With this assumption, note that we can recover both $\bb{X}$ (up to permutation) and $\widehat{F}$ when we are given $\bb{P}^*$.
+With this assumption, note that we can recover both $\bb{X}^*$ (up to permutation) and $\widehat{F}$ when we are given $\bb{P}^*$.
 Hence, it makes sense to consider the random variable of interest as simply a function of $\bb{P}^*$:
 \begin{equation*}
   R(\bb{P}^*) = R(\bb{X}^*, \widehat{F}).
@@ -312,21 +315,21 @@ which (using the fact that $DR^*(\bb{1}/n)\bb{1} = 0$) simplifies to
   \var[R(\bb{X}^*, \widehat{F})] \approx \frac{1}{n^2}\sum_{i=1}^n D_iR^*(\bb{1}/n)^2
 \end{equation}
 
-The above expressions for the bias and variance are exactly those given by the infinitesimal Jackknife. We can also compare these expressions to those given by the usual Jackknife, which replaces partial derivatives $D_iR^*$ with the finite differences
+The above expressions for the bias and variance are exactly those given by the infinitesimal jackknife. We can also compare these expressions to those given by the usual jackknife, which replaces partial derivatives $D_iR^*$ with the finite differences
 \begin{equation*}
   \Delta_iR^* = (n-1)\left[\frac{1}{n}\sum_{j=1}^n R^*\left(\frac{\bb{1}-\bb{e}_j}{n-1}\right) - R^*\left(\frac{\bb{1}-\bb{e}_i}{n-1}\right)\right],
 \end{equation*}
 where $\bb{e}_j$ is the $j$th standard basis vector.
-Note that the above definition of $\Delta_iR^*$ is simply a direct implementation of the Jackknife's "leave one out" procedure, but written in the language of Bootstrap.
-In this way, the bias and variance variance estimates from the ordinary Jackknife are instead given by
+Note that the above definition of $\Delta_iR^*$ is simply a direct implementation of the jackknife's "leave one out" procedure, but written in the language of Bootstrap.
+In this way, the bias and variance variance estimates from the ordinary jackknife are instead given by
 \begin{align}
   \E[R(\bb{X}^*, \widehat{F})] &\approx \frac{1}{2(n-1)}\overline{\bb{V}} \label{eq:jbias} \\
   \var[R(\bb{X}^*, \widehat{F})] &\approx \frac{1}{n(n-1)}\sum_{i=1}^n \left(\Delta_iR^*\right)^2. \label{eq:jvar}
 \end{align}
 
-We see that the bootstrap bias estimate differs from the Jackknife bias estimate by a factor of $n/(n-1) = 1 + O(1/n)$.
+We see that the bootstrap bias estimate differs from the jackknife bias estimate by a factor of $n/(n-1) = 1 + O(1/n)$.
 
-We can show that the variance estimates of the bootstrap and Jackknifediffer by the same factor of $1 + O(1/n)$. Via the Taylor expansion, we have that
+We can show that the variance estimates of the bootstrap and jackknife differ by the same factor of $1 + O(1/n)$. Via the Taylor expansion, we have that
 \begin{align*}
   R^*\left(\frac{\bb{1}-\bb{e}_i}{n-1}\right)
   &= R^*(\bb{1}/n) +  DR^*(\bb{1}/n)\left(\frac{\bb{1}}{n(n-1)} - \frac{\bb{e}_i}{n-1}\right) + \frac{1}{2}\left(\frac{\bb{1}}{n(n-1)} - \frac{\bb{e}_i}{n-1}\right)^\top HR^*(\bb{1}/n)\left(\frac{\bb{1}}{n(n-1)} - \frac{\bb{e}_i}{n-1}\right) \\
@@ -711,7 +714,7 @@ for(n in ns){
 plot(ns, rel_errors, xlab="n", ylab="Relative Error", main="Relative Error vs Sample Size")
 ```
 
-Even with a symmetric distribution, the heavy tails of a $t$-distribution with $3$ degrees of freedom cause problems for bootstrapping by residuals.
+Even with a symmetric distribution, the heavy tails of a $t$-distribution with $3$ degrees of freedom cause problems for bootstrapping by residuals that aren't present in bootstrapping by pairs.
 
 ### Real Data Application
 To illustrate this technique on a real dataset, we consider the hourly wage vs education data from Farber's 1976 Current Population Survey.
@@ -764,16 +767,3 @@ quantile(bootstrap_linear_betas, c(0.025, 0.975))
 quantile(bootstrap_quadratic_betas, c(0.025, 0.975))
 ```
 We see that bootstrapping actually yielded a slightly wider interval for the linear component and a slightly smaller confidence interval for the quadratic component.
- 
-<!-- ## Section II: Theory {#sec2} -->
-<!-- we will use this section sort of as an appendix. Put all proofs here with a link and then reference them from the summary-->
-
-
-<!--## Section III: Examples {#sec3}-->
-<!-- these will be our personal examples that are the ones that (i guess) will count for our grade -->
-
-<!--### Example 1 {#ex1}-->
-
-<!--### Example 2 {#ex2} -->
-
-
